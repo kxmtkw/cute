@@ -9,15 +9,15 @@ Because I keep forgetting what i need to do:
 
 + Implement an IR (dont)
 
-+ Add loop: while
++ Add loop: while (done)
 
-+ Add conditionals: if, else
++ Add conditionals: if, else (done)
 
 + Add functions
 
 + Add recursion
 
-+ Refactor how the binary operations are handled throughout the compiler.
++ Refactor how the binary operations are handled throughout the compiler (done)
 
 + Fix incorrect parsing behavior. [] brackets are not parsed properly. Expressions don't end nicely and () don't work properly for them when not closed.
 

@@ -1,5 +1,5 @@
 
-# Program Image Format
+# Program Image Format (OUTDATED)
 
 A program image file contains the following sections:
 
