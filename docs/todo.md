@@ -1,29 +1,18 @@
 
 ## Todo
 
-Because I keep forgetting what i need to do:
+List of features to be added.
 
-+ Add typecasting explicit. (done)
+##### Implicit Typecasting
 
-+ Refactor code and implement proper basic arithmetic (done)
+##### Better error messages
 
-+ Implement an IR (dont)
+##### Functions
 
-+ Add loop: while (done)
+##### Containers
 
-+ Add conditionals: if, else (done)
+##### Typecasting represented as Container creation
 
-+ Add functions
+##### Engine Modules
 
-+ Add recursion
-
-+ Refactor how the binary operations are handled throughout the compiler (done)
-
-+ Fix incorrect parsing behavior. [] brackets are not parsed properly. Expressions don't end nicely and () don't work properly for them when not closed.
-
-+ Improve the node printer. 
-
-+ Change the way how node walker does dispatch, I'm thinking of using a pure visitor pattern for ease of development.
-
-+ Added implicit type casting and basic type inference
-
+##### Engine error raising
