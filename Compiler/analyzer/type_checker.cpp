@@ -28,6 +28,7 @@ void CtTypeChecker::handleFunction(CtNode::Function *node)
 {
 	this->current_scope = node->scope;
 	this->walk(node->block);
+	this->current_scope = node->scope->parent;
 }
 
 
@@ -69,12 +70,18 @@ void CtTypeChecker::handleOut(CtNode::Out *node)
 
 void CtTypeChecker::handleLoop(CtNode::Loop *node)
 {
+	this->current_scope = node->scope;
+
 	this->walk(node->block);
+
+	this->current_scope = node->scope->parent;
 }
 
 
 void CtTypeChecker::handleWhile(CtNode::While *node)
 {
+	this->current_scope = node->scope;
+
 	this->walk(node->condition);
 	if (*node->condition->expr_type != *primitiveTypes.at("bool"))
 	{
@@ -85,11 +92,15 @@ void CtTypeChecker::handleWhile(CtNode::While *node)
 	}
 
 	this->walk(node->block);
+
+	this->current_scope = node->scope->parent;
 }
 
 
 void CtTypeChecker::handleFor(CtNode::For *node)
 {
+	this->current_scope = node->scope;
+
 	this->walk(node->init);
 
 	this->walk(node->condition);
@@ -103,11 +114,15 @@ void CtTypeChecker::handleFor(CtNode::For *node)
 
 	this->walk(node->step);
 	this->walk(node->block);
+
+	this->current_scope = node->scope->parent;
 }
 
 
 void CtTypeChecker::handleIf(CtNode::If *node)
 {
+	this->current_scope = node->scope;
+
 	this->walk(node->condition);
 	if (*node->condition->expr_type != *primitiveTypes.at("bool"))
 	{
@@ -118,6 +133,9 @@ void CtTypeChecker::handleIf(CtNode::If *node)
 	}
 
 	this->walk(node->then_block);
+
+	this->current_scope = node->scope->parent;
+	
 	if (node->else_stmt) {this->walk(node->else_stmt);}
 }
 

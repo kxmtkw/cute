@@ -26,7 +26,10 @@ void CtNameResolver::handleFunction(CtNode::Function *node)
 {
 	node->scope = new CtScope(this->current_scope);
 	this->current_scope = node->scope;
+
 	this->walk(node->block);
+
+	this->current_scope = node->scope->parent;
 }
 
 
@@ -69,29 +72,49 @@ void CtNameResolver::handleOut(CtNode::Out *node)
 
 void CtNameResolver::handleLoop(CtNode::Loop *node)
 {
+	node->scope = new CtScope(this->current_scope);
+	this->current_scope = node->scope;
+
 	this->walk(node->block);
+
+	this->current_scope = node->scope->parent;
 }
 
 
 void CtNameResolver::handleWhile(CtNode::While *node)
 {
+	node->scope = new CtScope(this->current_scope);
+	this->current_scope = node->scope;
+
 	this->walk(node->condition);
 	this->walk(node->block);
+
+	this->current_scope = node->scope->parent;
 }
 
 void CtNameResolver::handleFor(CtNode::For *node)
 {
+	node->scope = new CtScope(this->current_scope);
+	this->current_scope = node->scope;
+
 	this->walk(node->init);
 	this->walk(node->condition);
 	this->walk(node->step);
 	this->walk(node->block);
+
+	this->current_scope = node->scope->parent;
 }
 
 
 void CtNameResolver::handleIf(CtNode::If *node)
 {
+	node->scope = new CtScope(this->current_scope);
+	this->current_scope = node->scope;
+
 	this->walk(node->condition);
 	this->walk(node->then_block);
+
+	this->current_scope = node->scope->parent;
 
 	if (node->else_stmt) {this->walk(node->else_stmt);}
 }

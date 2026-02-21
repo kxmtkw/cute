@@ -119,8 +119,9 @@ namespace CtNode
 	struct StmtBlock : Statement
 	{
 		std::vector<Statement*> stmts;
-		CtScope* scope;
 
+		CtScope* scope;
+		
 		StmtBlock() {nt = CtNodeType::StmtBlock;};
 		~StmtBlock();
 	};
@@ -159,6 +160,8 @@ namespace CtNode
 		StmtBlock* then_block;
 		Statement* else_stmt = nullptr; // can be either an else (stmtblock) or else if (If node)
 
+		CtScope* scope;
+
 		If() {nt = CtNodeType::If;}
 		~If();
 	};
@@ -166,6 +169,8 @@ namespace CtNode
 	struct Loop : Statement
 	{
 		StmtBlock* block;
+
+		CtScope* scope;
 
 		Loop() {{nt = CtNodeType::Loop;}};
 		~Loop();
@@ -177,6 +182,8 @@ namespace CtNode
 		Expression* condition;
 		StmtBlock* block;
 
+		CtScope* scope;
+
 		While() {{nt = CtNodeType::While;}};
 		~While();
 	};
@@ -187,6 +194,8 @@ namespace CtNode
 		Expression* condition;
 		Expression* step;
 		StmtBlock* block;
+
+		CtScope* scope;
 
 		For() {{nt = CtNodeType::For;}};
 		~For();
