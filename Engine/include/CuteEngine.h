@@ -1,40 +1,37 @@
+
+#ifndef CUTE_ENGINE_H
+#define CUTE_ENGINE_H
+
+#include <stdint.h>
 #include "CuteByte.h"
 
-#include "../core/context.h"
 
-#pragma once 
+typedef struct {
+	uint64_t procedure_id;
+	uint32_t locals_count;
+	uint64_t* local_atoms;
+} CtCallFrame;
 
-#define CUTE_VERSION "v0.0.3"
+typedef struct {
+	CtCallFrame* call_stack;
+	uint64_t size;
+} CtCallStack;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+void CtCallStack_init(CtCallStack* stack);
+void CtCallStack_del(CtCallStack* stack);
+void CtCallStack_push(CtCallStack* stack, CtCallFrame frame);
+CtCallFrame CtCallStack_pop(CtCallStack* stack);
 
+typedef struct {
+	CtImage* image;
+	CtCallStack call_stack;
+	int64_t	ip;
+	int64_t registers[16];
+} CtContext;
 
-typedef struct
-{
-	ctProgramImage img;
-} CuteEngine;
+typedef struct {
+	CtContext ctx;
+	CtImage img;
+} CtEngine;
 
-extern CuteEngine CtEngine;
-
-
-// Initializes the Engine
-void CuteEngine_init();
-
-// Ends the Engine and all its states
-void CuteEngine_end(int exit_code);
-
-// Executes a state struct, the state struct must be properly initialized
-void CuteEngine_exec(ctContext *ctx);
-
-// Sets up state struct with function 0 and executes it.
-void CuteEngine_run(); 
-
-// Loading an image file
-void CuteEngine_loadImage(char *filepath);
-
-
-#ifdef __cplusplus
-}
-#endif
+#endif // CUTE_ENGINE_H
