@@ -1,4 +1,3 @@
-
 #include "CuteByte.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,3 +80,23 @@ CtImage_read(CtImage *img, const char *filepath) {
 	fclose(fp);
 	return CtImageCode_Success;
 };
+
+
+void CtImage_print(const CtImage* img) {
+	printf("=== CtImage ===\n");
+	printf("magic:       0x%08X\n", img->header.magic_id);
+	printf("proc count:  %lu\n",   img->header.procedure_count);
+	printf("instr count: %lu\n",   img->header.instruction_count);
+
+	printf("\n--- Procedures ---\n");
+	for (uint64_t i = 0; i < img->header.procedure_count; i++) {
+		CtImageProcedure* p = &img->procedure_table[i];
+		printf("  [%lu] id=%lu bytecode_index=%lu locals=%u\n",
+			i, p->id, p->bytecode_index, p->locals_size);
+	}
+
+	printf("\n--- Instructions ---\n");
+	for (uint64_t i = 0; i < img->header.instruction_count; i++) {
+		printf("  [%04lu] 0x%02X %d\n", i, img->instruction_pool[i], img->instruction_pool[i]);
+	}
+}

@@ -12,7 +12,9 @@ typedef enum {
 	instrOut     = 0x10,
 
 	instrMov     = 0x20,
-	instrLoad    = 0x21,
+	instrLoadI   = 0x21,
+	instrLoadU   = 0x22,
+	instrLoadF   = 0x23,
 
 	instrAddI    = 0x30,
 	instrSubI    = 0x31,
@@ -111,7 +113,7 @@ CtImage_write(CtImage *img, const char *filepath);
 CtImageCode 
 CtImage_read(CtImage *img, const char *filepath);
 
-
+void CtImage_print(const CtImage* img);
 
 static const uint32_t CtMagicId = 0x12345678; 
 

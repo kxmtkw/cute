@@ -3,35 +3,42 @@
 #define CUTE_ENGINE_H
 
 #include <stdint.h>
+#include "CuteAtom.h"
 #include "CuteByte.h"
 
 
 typedef struct {
 	uint64_t procedure_id;
 	uint32_t locals_count;
-	uint64_t* local_atoms;
+	CtAtom* local_atoms;
 } CtCallFrame;
 
-typedef struct {
-	CtCallFrame* call_stack;
-	uint64_t size;
-} CtCallStack;
-
-void CtCallStack_init(CtCallStack* stack);
-void CtCallStack_del(CtCallStack* stack);
-void CtCallStack_push(CtCallStack* stack, CtCallFrame frame);
-CtCallFrame CtCallStack_pop(CtCallStack* stack);
 
 typedef struct {
 	CtImage* image;
-	CtCallStack call_stack;
-	int64_t	ip;
-	int64_t registers[16];
+	CtCallFrame call_frame;
+	uint64_t	ip;
+	CtAtom registers[32];
 } CtContext;
+
+#define CT_VALIDREGISTER(r) assert((r) < sizeof(ctx->registers) / sizeof(ctx->registers[0]))
+
+#define CT_BINARYOP()
 
 typedef struct {
 	CtContext ctx;
 	CtImage img;
 } CtEngine;
+
+
+
+CtContext*
+Cute_newContext(CtImage* img);
+
+void
+Cute_run(CtContext* ctx, uint64_t procedure_id);
+
+void
+Cute_exec(CtContext* ctx);
 
 #endif // CUTE_ENGINE_H
