@@ -218,20 +218,70 @@ case instrNegF:
     break;
 
 case instrCmpI:
+	r1 = instrs[ctx->ip++];
+	r2 = instrs[ctx->ip++];
+	CT_VALIDREGISTER(r1);
+	CT_VALIDREGISTER(r2);
+
+	if (ctx->registers[r1] < ctx->registers[r2]) {
+		ctx->registers[r1] = -1;
+	} else if (ctx->registers[r1] > ctx->registers[r2]) {
+		ctx->registers[r1] = 1;
+	} else {
+		ctx->registers[r1] = 0;
+	}
+	break;
+
 case instrCmpF:
 case instrCheckEq:
-case instrCheckLt:
-case instrCheckLe:
-case instrCheckGt:
-case instrCheckGe:
-case instrJmp:
-	r1 = instrs[ctx->ip];
-	ctx->ip = r1;
+	r1 = instrs[ctx->ip++];
+	CT_VALIDREGISTER(r1);
+	if (ctx->registers[r1] == 0 ) {
+		ctx->registers[r1] = 1;
+	} else {
+		ctx->registers[r1] = 0;
+	}
 	break;
-case instrJmpIf:
-case instrJmpIfNot:
-case instrCall:
-case instrRet:
+
+case instrCheckLt:
+	r1 = instrs[ctx->ip++];
+	CT_VALIDREGISTER(r1);
+	if (ctx->registers[r1] == -1) {
+		ctx->registers[r1] = 1;
+	} else {
+		ctx->registers[r1] = 0;
+	}
+	break;
+
+case instrCheckLe:
+	r1 = instrs[ctx->ip++];
+	CT_VALIDREGISTER(r1);
+	if (ctx->registers[r1] != 1) {
+		ctx->registers[r1] = 1;
+	} else {
+		ctx->registers[r1] = 0;
+	}
+	break;
+
+case instrCheckGt:
+	r1 = instrs[ctx->ip++];
+	CT_VALIDREGISTER(r1);
+	if (ctx->registers[r1] == 1 ) {
+		ctx->registers[r1] = 1;
+	} else {
+		ctx->registers[r1] = 0;
+	}
+	break;
+
+case instrCheckGe:
+	r1 = instrs[ctx->ip++];
+	CT_VALIDREGISTER(r1);
+	if (ctx->registers[r1] != -1) {
+		ctx->registers[r1] = 1;
+	} else {
+		ctx->registers[r1] = 0;
+	}
+	break;
 case instrLogAnd:
 case instrLogOr:
 case instrLogNot:
@@ -243,6 +293,16 @@ case instrBitShL:
 case instrBitShR:
 case instrBitSaL:
 case instrBitSaR:
+case instrJmp:
+	r1 = load32(instrs, &ctx->ip);
+	ctx->ip -= 4;
+	ctx->ip += r1;
+	break;
+case instrJmpIf:
+break;
+case instrJmpIfNot:
+case instrCall:
+case instrRet:
 case instrConNew:
 case instrConDel:
 case instrConGet:

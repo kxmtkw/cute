@@ -8,11 +8,10 @@ main() {
 
 	// instructions: load 5, load 3, add, out, halt
 	CtInstructionSize instructions[] = {
-		instrLoadI, 0,0,0,0,0,   // load const[0] (5) -> R0
-		instrLoadI, 1,0,0,0,1,   // load const[0] (5) -> R0
-		instrAddI, 0,1,
+		instrLoadI, 200,0,0,0,0,   // load const[0] (5) -> R0
+		instrLoadI, 10,0,0,0,1,   // load const[0] (5) -> R0
+		instrCmpI, 0,1,
 		instrOut,  0, 2,   // out R0 as int
-		instrJmp, 12,
 		instrHalt, 0,      // halt
 	};
 

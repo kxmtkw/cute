@@ -12,7 +12,7 @@ typedef enum {
 	CtAtomType_Container = 3
 } CtAtomType;
 
-typedef uint64_t CtAtom;
+typedef int64_t CtAtom;
 
 #define CTATOM_MASK(atom, type) \
 (atom & ~((int64_t)0x3 << 62)) | ((int64_t)type << 62)
