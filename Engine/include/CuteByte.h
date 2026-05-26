@@ -10,11 +10,13 @@ typedef enum {
 	instrNull    = 0x01,
 
 	instrOut     = 0x10,
+	instrTypeOf  = 0x11,
 
 	instrMov     = 0x20,
 	instrLoadI   = 0x21,
 	instrLoadU   = 0x22,
 	instrLoadF   = 0x23,
+	instrLoadB   = 0x24,
 
 	instrAddI    = 0x30,
 	instrSubI    = 0x31,
@@ -35,13 +37,16 @@ typedef enum {
 	instrDivF    = 0x53,
 	instrNegF    = 0x54,
 
-	instrCmpI    = 0x60,
-	instrCmpF    = 0x61,
-	instrCheckEq = 0x62,
-	instrCheckLt = 0x63,
-	instrCheckLe = 0x64,
-	instrCheckGt = 0x65,
-	instrCheckGe = 0x66,
+	instrLogicAnd    = 0x60,
+	instrLogicOr     = 0x61,
+	instrLogicNot    = 0x62,
+
+	instrBitAnd      = 0x70,
+	instrBitOr       = 0x71,
+	instrBitNot      = 0x73,
+	instrBitXor      = 0x74,
+	instrBitShl      = 0x75,
+	instrBitShr      = 0x76     
 
 } CtInstruction;
 

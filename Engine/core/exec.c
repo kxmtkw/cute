@@ -43,6 +43,7 @@ type_name(CtAtomType type) {
 		case CtAtomType_Int: return "Int";
 		case CtAtomType_UInt: return "UInt";
 		case CtAtomType_Float: return "Float";
+		case CtAtomType_Bool: return "Bool";
 		case CtAtomType_Container: return "Container";
 		default: return "Unknown";
 	}
@@ -77,10 +78,10 @@ check_type(&ctx->registers, r2, Type); \
 ctx->registers.atoms[r1].AtomField =  ctx->registers.atoms[r1].AtomField Operation ctx->registers.atoms[r2].AtomField;
 
 
-#define INSTR_NEGOP(Type, AtomField) \
+#define INSTR_UNARYOP(Type, AtomField, Operation) \
 r1 = instrs[ctx->ip++]; \
 check_type(&ctx->registers, r1, Type); \
-ctx->registers.atoms[r1].AtomField = -ctx->registers.atoms[r1].AtomField;
+ctx->registers.atoms[r1].AtomField = Operation ctx->registers.atoms[r1].AtomField;
 
 
 void
@@ -113,6 +114,11 @@ Cute_exec(CtContext* ctx)
 			out(ctx->registers.atoms[r1], r2);
 			break;
 
+		case instrTypeOf:
+			r1 = instrs[ctx->ip++];
+			printf("%s\n", type_name(ctx->registers.types[r1]));
+			break;
+
 		case instrMov:
 			r1 = instrs[ctx->ip++];
 			r2 = instrs[ctx->ip++];
@@ -130,6 +136,10 @@ Cute_exec(CtContext* ctx)
 
 		case instrLoadF:
 			INSTR_LOAD(CtAtomType_Float);
+			break;
+
+		case instrLoadB:
+			INSTR_LOAD(CtAtomType_Bool);
 			break;
 
 		case instrAddI:
@@ -153,7 +163,7 @@ Cute_exec(CtContext* ctx)
 			break;
 
 		case instrNegI:
-			INSTR_NEGOP(CtAtomType_Int, as_int);
+			INSTR_UNARYOP(CtAtomType_Int, as_int, -);
 			break;
 
 		case instrAddU:
@@ -193,7 +203,43 @@ Cute_exec(CtContext* ctx)
 			break;	
 
 		case instrNegF:
-			INSTR_NEGOP(CtAtomType_Float, as_float);
+			INSTR_UNARYOP(CtAtomType_Float, as_float, -);
+			break;
+
+		case instrLogicAnd:
+			INSTR_BINARYOP(CtAtomType_Bool, as_bool, &&);
+			break;
+
+		case instrLogicOr:
+			INSTR_BINARYOP(CtAtomType_Bool, as_bool, ||);
+			break;
+
+		case instrLogicNot:
+			INSTR_UNARYOP(CtAtomType_Bool, as_bool, !);
+			break;
+
+		case instrBitAnd:
+			INSTR_BINARYOP(CtAtomType_UInt, as_uint, &);
+			break;
+
+		case instrBitOr:
+			INSTR_BINARYOP(CtAtomType_UInt, as_uint, |);
+			break;
+
+		case instrBitNot:
+			INSTR_UNARYOP(CtAtomType_UInt, as_uint, ~);
+			break;
+
+		case instrBitXor:
+			INSTR_BINARYOP(CtAtomType_UInt, as_uint, ^);
+			break;
+
+		case instrBitShl:
+			INSTR_BINARYOP(CtAtomType_UInt, as_uint, <<);
+			break;
+			
+		case instrBitShr:
+			INSTR_BINARYOP(CtAtomType_UInt, as_uint, >>);
 			break;
 		}
 	}

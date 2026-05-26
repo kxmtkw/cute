@@ -24,10 +24,12 @@ static const std::map<std::string, InstrSpec> instrMap = {
 	{"halt", {instrHalt, {1}}},
 	{"null", {instrNull, {}}},
 	{"out", {instrOut, {1, 1}}},
+	{"typeof", {instrTypeOf, {1}}},
 	{"mov", {instrMov, {1, 1}}},
 	{"loadi", {instrLoadI, {1, 4}}},
 	{"loadu", {instrLoadU, {1, 4}}},
 	{"loadf", {instrLoadF, {1, 4}}},
+	{"loadb", {instrLoadB, {1, 4}}},
 	{"addi", {instrAddI, {1, 1}}},
 	{"subi", {instrSubI, {1, 1}}},
 	{"muli", {instrMulI, {1, 1}}},
@@ -44,6 +46,15 @@ static const std::map<std::string, InstrSpec> instrMap = {
 	{"mulf", {instrMulF, {1, 1}}},
 	{"divf", {instrDivF, {1, 1}}},
 	{"negf", {instrNegF, {1}}},
+	{"and", {instrLogicAnd, {1, 1}}},
+	{"or", {instrLogicOr, {1, 1}}},
+	{"not", {instrLogicNot, {1}}},
+	{"band", {instrBitAnd, {1, 1}}},
+	{"bor", {instrBitOr, {1, 1}}},
+	{"bxor", {instrBitXor, {1, 1}}},
+	{"bnot", {instrBitNot, {1,}}},
+	{"bshl", {instrBitShl, {1, 1}}},
+	{"bshr", {instrBitShr, {1, 1}}},
 };
 
 static std::string

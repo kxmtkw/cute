@@ -10,7 +10,8 @@ typedef enum {
 	CtAtomType_Int = 0x1,
 	CtAtomType_UInt = 0x2,
 	CtAtomType_Float = 0x3,
-	CtAtomType_Container = 0x4
+	CtAtomType_Bool = 0x4,
+	CtAtomType_Container = 0x5
 } CtAtomType;
 
 typedef uint8_t CtAtomTypeSize;
@@ -19,6 +20,7 @@ typedef union {
 	uint64_t raw;
 	int64_t as_int;
 	uint64_t as_uint;
+	uint64_t as_bool;
 	double as_float;
 } CtAtom;
 
