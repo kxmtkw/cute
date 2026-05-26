@@ -185,7 +185,7 @@ assemble(const std::vector<std::string>& tokens)
 			}
 
 			if (argLength == 4) {
-				if (mnemonic == "loadf" && argIndex == 0) {
+				if (mnemonic == "loadf") {
 					appendU32(bytecode, parseF32Bits(arg));
 				} else {
 					appendU32(bytecode, parseU32(arg));

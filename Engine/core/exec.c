@@ -93,6 +93,8 @@ Cute_exec(CtContext* ctx)
 	uint64_t r2;
 	uint64_t r3;
 
+	float f;
+
 	while(true)
 	{
 	CtInstruction instr = instrs[ctx->ip++];
@@ -122,8 +124,8 @@ Cute_exec(CtContext* ctx)
 		case instrMov:
 			r1 = instrs[ctx->ip++];
 			r2 = instrs[ctx->ip++];
-			ctx->registers.atoms[r2] = ctx->registers.atoms[r1];
-			ctx->registers.types[r2] = ctx->registers.types[r1];
+			ctx->registers.atoms[r1] = ctx->registers.atoms[r2];
+			ctx->registers.types[r1] = ctx->registers.types[r2];
 			break;
 
 		case instrLoadI:
@@ -135,7 +137,13 @@ Cute_exec(CtContext* ctx)
 			break;
 
 		case instrLoadF:
-			INSTR_LOAD(CtAtomType_Float);
+			// This is temporary. Once load instruction actually loads from a constant pool,
+			// this won't be needed.
+			r1 = instrs[ctx->ip++];
+			r2 = load32(instrs, &ctx->ip);
+			memcpy(&f, &r2, sizeof(f)); 
+			ctx->registers.atoms[r1].as_float= f;
+			ctx->registers.types[r1] = CtAtomType_Float;
 			break;
 
 		case instrLoadB:
