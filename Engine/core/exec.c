@@ -8,6 +8,7 @@
 #include "CuteAtom.h"
 #include "CuteEngine.h"
 
+
 static inline uint32_t
 load32(CtInstructionSize* instrs, uint64_t* ip) {
 	uint32_t u;
@@ -16,302 +17,185 @@ load32(CtInstructionSize* instrs, uint64_t* ip) {
 	return u;
 }
 
-void 
-out(uint64_t value, uint32_t fmt) {
+
+static inline void 
+out(CtAtom atom, uint32_t fmt) {
     switch (fmt) {
         case 0:
             for (int i = 63; i >= 0; i--)
-                putchar((value >> i) & 1 ? '1' : '0');
+                putchar((atom.raw >> i) & 1 ? '1' : '0');
             putchar('\n');
             break;
-        case 1: printf("%lx\n",  value); break;
-        case 2: printf("%ld\n",  value); break;
-        case 3: printf("%lu\n",  (uint64_t)value); break;
-        case 4: double f; memcpy(&f, &value, 8); printf("%f\n", f); break;
-        case 5: printf("%s\n",   value ? "true" : "false"); break;
+        case 1: printf("%lx\n",  atom.as_uint); break;
+        case 2: printf("%ld\n", atom.as_int); break;
+        case 3: printf("%lu\n", atom.as_uint); break;
+		case 4: printf("%f\n",  atom.as_float); break;
+        case 5: printf("%s\n",   atom.raw ? "true" : "false"); break;
 		default: printf("Unknown format: %d\n", fmt); break;
     }
 }
 
 
+static inline const char*
+type_name(CtAtomType type) {
+	switch (type) {
+		case CtAtomType_NoneType: return "NoneType";
+		case CtAtomType_Int: return "Int";
+		case CtAtomType_UInt: return "UInt";
+		case CtAtomType_Float: return "Float";
+		case CtAtomType_Container: return "Container";
+		default: return "Unknown";
+	}
+}
+
+
+static inline void
+check_type(CtRegisterFile* registers, uint index, CtAtomType expected_type) {
+	if (registers->types[index] != expected_type) {
+		printf(
+			"Expected type '%s'. Got '%s'\n",
+			type_name(expected_type),
+			type_name(registers->types[index])
+		);
+		exit(1);
+	};
+}
+
+
+#define INSTR_LOAD(type) \
+r1 = instrs[ctx->ip++]; \
+r2 = load32(instrs, &ctx->ip); \
+ctx->registers.atoms[r1].raw = r2; \
+ctx->registers.types[r1] = type;
+
+
+#define INSTR_BINARYOP(Type, AtomField, Operation) \
+r1 = instrs[ctx->ip++]; \
+r2 = instrs[ctx->ip++]; \
+check_type(&ctx->registers, r1, Type); \
+check_type(&ctx->registers, r2, Type); \
+ctx->registers.atoms[r1].AtomField =  ctx->registers.atoms[r1].AtomField Operation ctx->registers.atoms[r2].AtomField;
+
+
+#define INSTR_NEGOP(Type, AtomField) \
+r1 = instrs[ctx->ip++]; \
+check_type(&ctx->registers, r1, Type); \
+ctx->registers.atoms[r1].AtomField = -ctx->registers.atoms[r1].AtomField;
+
+
 void
 Cute_exec(CtContext* ctx) 
 {
+	CtInstructionSize* instrs = ctx->image->instruction_pool;
+		
+	uint64_t r1;
+	uint64_t r2;
+	uint64_t r3;
 
-CtInstructionSize* instrs = ctx->image->instruction_pool;
-	
-uint64_t r1;
-uint64_t r2;
-uint64_t r3;
+	while(true)
+	{
+	CtInstruction instr = instrs[ctx->ip++];
+	//printf("instruction 0x%x ip: %lu\n", instr, ctx->ip);
 
-double f1;
-double f2;
+		switch (instr) 
+		{
 
-while(true)
-{
-CtInstruction instr = instrs[ctx->ip++];
-//printf("instruction 0x%x ip: %lu\n", instr, ctx->ip);
+		case instrHalt:
+			exit(instrs[ctx->ip++]);
+			return;
 
-switch (instr) 
-{
+		case instrNull:
+			continue;
 
-case instrHalt:
-	exit(instrs[ctx->ip++]);
-	return;
+		case instrOut:
+			r1 = instrs[ctx->ip++];
+			r2 = instrs[ctx->ip++];
+			out(ctx->registers.atoms[r1], r2);
+			break;
 
-case instrNull:
-	continue;
+		case instrMov:
+			r1 = instrs[ctx->ip++];
+			r2 = instrs[ctx->ip++];
+			ctx->registers.atoms[r2] = ctx->registers.atoms[r1];
+			ctx->registers.types[r2] = ctx->registers.types[r1];
+			break;
 
-case instrOut:
-	r1 = instrs[ctx->ip++];
-	r2 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r1);
-	CT_VALIDREGISTER(r2);
-	out(ctx->registers[r1], r2);
-	break;
+		case instrLoadI:
+			INSTR_LOAD(CtAtomType_Int);
+			break;
 
-case instrMov:
-	r1 = instrs[ctx->ip++];
-	r2 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r1);
-	CT_VALIDREGISTER(r2);
-	ctx->registers[r2] = ctx->registers[r1];
-	break;
+		case instrLoadU:
+			INSTR_LOAD(CtAtomType_UInt);
+			break;
 
-case instrLoadI:
-	r1 = load32(instrs, &ctx->ip);
-	r1 = CTATOM_MASK(r1, CtAtomType_Int);
-	r2 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r2);
-	ctx->registers[r2] = r1;
-	break;
+		case instrLoadF:
+			INSTR_LOAD(CtAtomType_Float);
+			break;
 
-case instrLoadU:
-	r1 = load32(instrs, &ctx->ip);
-	r1 = CTATOM_MASK(r1, CtAtomType_UInt);
-	r2 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r2);
-	ctx->registers[r2] = r1;
-	break;
+		case instrAddI:
+			INSTR_BINARYOP(CtAtomType_Int, as_int, +);
+			break;
 
-case instrLoadF:
-	r1 = load32(instrs, &ctx->ip);
-	r1 = CTATOM_MASK(r1, CtAtomType_Float);
-	r2 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r2);
-	ctx->registers[r2] = r1;
-	break;
+		case instrSubI:
+			INSTR_BINARYOP(CtAtomType_Int, as_int, -);
+			break;
 
-case instrAddI:
-	r1 = instrs[ctx->ip++];
-	r2 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r1);
-	CT_VALIDREGISTER(r2);
-	ctx->registers[r1] = (int64_t)ctx->registers[r1] + (int64_t)ctx->registers[r2];
-	break;
+		case instrMulI:
+			INSTR_BINARYOP(CtAtomType_Int, as_int, *);
+			break;
 
-case instrSubI:
-	r1 = instrs[ctx->ip++];
-	r2 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r1);
-	CT_VALIDREGISTER(r2);
-	ctx->registers[r1] = (int64_t)ctx->registers[r1] - (int64_t)ctx->registers[r2];
-	break;
+		case instrDivI:
+			INSTR_BINARYOP(CtAtomType_Int, as_int, /);
+			break;
 
-case instrMulI:
-	r1 = instrs[ctx->ip++];
-	r2 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r1);
-	CT_VALIDREGISTER(r2);
-	ctx->registers[r1] = (int64_t)ctx->registers[r1] * (int64_t)ctx->registers[r2];
-	break;
+		case instrModI:
+			INSTR_BINARYOP(CtAtomType_Int, as_int, %);
+			break;
 
-case instrDivI:
-	r1 = instrs[ctx->ip++];
-	r2 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r1);
-	CT_VALIDREGISTER(r2);
-	ctx->registers[r1] = (int64_t)ctx->registers[r1] / (int64_t)ctx->registers[r2];
-	break;
+		case instrNegI:
+			INSTR_NEGOP(CtAtomType_Int, as_int);
+			break;
 
-case instrModI:
-	r1 = instrs[ctx->ip++];
-	r2 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r1);
-	CT_VALIDREGISTER(r2);
-	ctx->registers[r1] = (int64_t)ctx->registers[r1] % (int64_t)ctx->registers[r2];
-	break;
+		case instrAddU:
+			INSTR_BINARYOP(CtAtomType_UInt, as_uint, +);
+			break;
 
-case instrNegI:
-	r1 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r1);
-	ctx->registers[r1] = -(int64_t)ctx->registers[r1];
-	break;
+		case instrSubU:
+			INSTR_BINARYOP(CtAtomType_UInt, as_uint, -);
+			break;
 
-case instrDivU:
-	r1 = instrs[ctx->ip++];
-	r2 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r1);
-	CT_VALIDREGISTER(r2);
-	ctx->registers[r1] = (uint64_t)ctx->registers[r1] / (uint64_t)ctx->registers[r2];
-	break;
+		case instrMulU:
+			INSTR_BINARYOP(CtAtomType_UInt, as_uint, *);
+			break;
 
-case instrModU:
-	r1 = instrs[ctx->ip++];
-	r2 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r1);
-	CT_VALIDREGISTER(r2);
-	ctx->registers[r1] = (uint64_t)ctx->registers[r1] % (uint64_t)ctx->registers[r2];
-	break;
+		case instrDivU:
+			INSTR_BINARYOP(CtAtomType_UInt, as_uint, /);
+			break;
 
-case instrAddF:
-    r1 = instrs[ctx->ip++];
-    r2 = instrs[ctx->ip++];
-    CT_VALIDREGISTER(r1);
-    CT_VALIDREGISTER(r2);
-    memcpy(&f1, &ctx->registers[r1], 8);
-    memcpy(&f2, &ctx->registers[r2], 8);
-    f1 += f2;
-    memcpy(&ctx->registers[r1], &f1, 8);
-	printf("%f\n", f1);
-    break;
+		case instrModU:
+			INSTR_BINARYOP(CtAtomType_UInt, as_uint, %);
+			break;
 
-case instrSubF:
-    r1 = instrs[ctx->ip++];
-    r2 = instrs[ctx->ip++];
-    CT_VALIDREGISTER(r1);
-    CT_VALIDREGISTER(r2);
-    memcpy(&f1, &ctx->registers[r1], 8);
-    memcpy(&f2, &ctx->registers[r2], 8);
-    f1 -= f2;
-    memcpy(&ctx->registers[r1], &f1, 8);
-    break;
+		case instrAddF:
+			INSTR_BINARYOP(CtAtomType_Float, as_float, +);
+			break;	
 
-case instrMulF:
-    r1 = instrs[ctx->ip++];
-    r2 = instrs[ctx->ip++];
-    CT_VALIDREGISTER(r1);
-    CT_VALIDREGISTER(r2);
-    memcpy(&f1, &ctx->registers[r1], 8);
-    memcpy(&f2, &ctx->registers[r2], 8);
-    f1 *= f2;
-    memcpy(&ctx->registers[r1], &f1, 8);
-    break;
+		case instrSubF:
+			INSTR_BINARYOP(CtAtomType_Float, as_float, -);
+			break;	
 
-case instrDivF:
-    r1 = instrs[ctx->ip++];
-    r2 = instrs[ctx->ip++];
-    CT_VALIDREGISTER(r1);
-    CT_VALIDREGISTER(r2);
-    memcpy(&f1, &ctx->registers[r1], 8);
-    memcpy(&f2, &ctx->registers[r2], 8);
-    f1 /= f2;
-    memcpy(&ctx->registers[r1], &f1, 8);
-    break;
+		case instrMulF:
+			INSTR_BINARYOP(CtAtomType_Float, as_float, *);
+			break;	
 
-case instrNegF:
-    r1 = instrs[ctx->ip++];
-    CT_VALIDREGISTER(r1);
-    memcpy(&f1, &ctx->registers[r1], 8);
-    f1 = -f1;
-    memcpy(&ctx->registers[r1], &f1, 8);
-    break;
+		case instrDivF:
+			INSTR_BINARYOP(CtAtomType_Float, as_float, /);
+			break;	
 
-case instrCmpI:
-	r1 = instrs[ctx->ip++];
-	r2 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r1);
-	CT_VALIDREGISTER(r2);
-
-	if (ctx->registers[r1] < ctx->registers[r2]) {
-		ctx->registers[r1] = -1;
-	} else if (ctx->registers[r1] > ctx->registers[r2]) {
-		ctx->registers[r1] = 1;
-	} else {
-		ctx->registers[r1] = 0;
+		case instrNegF:
+			INSTR_NEGOP(CtAtomType_Float, as_float);
+			break;
+		}
 	}
-	break;
-
-case instrCmpF:
-case instrCheckEq:
-	r1 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r1);
-	if (ctx->registers[r1] == 0 ) {
-		ctx->registers[r1] = 1;
-	} else {
-		ctx->registers[r1] = 0;
-	}
-	break;
-
-case instrCheckLt:
-	r1 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r1);
-	if (ctx->registers[r1] == -1) {
-		ctx->registers[r1] = 1;
-	} else {
-		ctx->registers[r1] = 0;
-	}
-	break;
-
-case instrCheckLe:
-	r1 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r1);
-	if (ctx->registers[r1] != 1) {
-		ctx->registers[r1] = 1;
-	} else {
-		ctx->registers[r1] = 0;
-	}
-	break;
-
-case instrCheckGt:
-	r1 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r1);
-	if (ctx->registers[r1] == 1 ) {
-		ctx->registers[r1] = 1;
-	} else {
-		ctx->registers[r1] = 0;
-	}
-	break;
-
-case instrCheckGe:
-	r1 = instrs[ctx->ip++];
-	CT_VALIDREGISTER(r1);
-	if (ctx->registers[r1] != -1) {
-		ctx->registers[r1] = 1;
-	} else {
-		ctx->registers[r1] = 0;
-	}
-	break;
-case instrLogAnd:
-case instrLogOr:
-case instrLogNot:
-case instrBitAnd:
-case instrBitOr:
-case instrBitXor:
-case instrBitNot:
-case instrBitShL:
-case instrBitShR:
-case instrBitSaL:
-case instrBitSaR:
-case instrJmp:
-	r1 = load32(instrs, &ctx->ip);
-	ctx->ip -= 4;
-	ctx->ip += r1;
-	break;
-case instrJmpIf:
-break;
-case instrJmpIfNot:
-case instrCall:
-case instrRet:
-case instrConNew:
-case instrConDel:
-case instrConGet:
-case instrConSet:
-case instrConClone:
-	break;
-
-}
-
-}
 
 }

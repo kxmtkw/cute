@@ -23,8 +23,11 @@ typedef enum {
 	instrModI    = 0x34,
 	instrNegI    = 0x35,
 
-	instrDivU    = 0x40,
-	instrModU    = 0x41,
+	instrAddU    = 0x40,
+	instrSubU    = 0x41,
+	instrMulU    = 0x42,
+	instrDivU    = 0x43,
+	instrModU    = 0x44,
 
 	instrAddF    = 0x50,
 	instrSubF    = 0x51,
@@ -39,31 +42,6 @@ typedef enum {
 	instrCheckLe = 0x64,
 	instrCheckGt = 0x65,
 	instrCheckGe = 0x66,
-
-	instrJmp      = 0x70,
-	instrJmpIf    = 0x71,
-	instrJmpIfNot = 0x72,
-	instrCall     = 0x73,
-	instrRet      = 0x74,
-
-	instrLogAnd  = 0x80,
-	instrLogOr   = 0x81,
-	instrLogNot  = 0x82,
-
-	instrBitAnd  = 0x90,
-	instrBitOr   = 0x91,
-	instrBitXor  = 0x92,
-	instrBitNot  = 0x93,
-	instrBitShL  = 0x94,
-	instrBitShR  = 0x95,
-	instrBitSaL  = 0x96,
-	instrBitSaR  = 0x97,
-
-	instrConNew   = 0xA0,
-	instrConDel   = 0xA1,
-	instrConGet   = 0xA2,
-	instrConSet   = 0xA3,
-	instrConClone = 0xA4,
 
 } CtInstruction;
 

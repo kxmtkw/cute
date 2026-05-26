@@ -6,19 +6,25 @@
 #include <stdint.h>
 
 typedef enum {
-	CtAtomType_Int = 0,
-	CtAtomType_UInt = 1,
-	CtAtomType_Float = 2,
-	CtAtomType_Container = 3
+	CtAtomType_NoneType = 0x0,
+	CtAtomType_Int = 0x1,
+	CtAtomType_UInt = 0x2,
+	CtAtomType_Float = 0x3,
+	CtAtomType_Container = 0x4
 } CtAtomType;
 
-typedef int64_t CtAtom;
+typedef uint8_t CtAtomTypeSize;
 
-#define CTATOM_MASK(atom, type) \
-(atom & ~((int64_t)0x3 << 62)) | ((int64_t)type << 62)
+typedef union {
+	uint64_t raw;
+	int64_t as_int;
+	uint64_t as_uint;
+	double as_float;
+} CtAtom;
 
-#define CTATOM_ISINT(atom)   (((atom) >> 62) == CtAtomType_Int)
-#define CTATOM_ISUINT(atom)  (((atom) >> 62) == CtAtomType_UInt)
-#define CTATOM_ISFLOAT(atom) (((atom) >> 62) == CtAtomType_Float)
+typedef struct {
+	CtAtomType type;
+	CtAtom atom;
+} CtTypedAtom;
 
 #endif // CUTE_ATOM_H

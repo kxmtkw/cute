@@ -15,21 +15,24 @@ typedef struct {
 
 
 typedef struct {
+	CtAtom atoms[32];
+	CtAtomTypeSize types[32];
+} CtRegisterFile;
+
+typedef struct {
 	CtImage* image;
 	CtCallFrame call_frame;
+	CtRegisterFile registers;
 	uint64_t	ip;
-	CtAtom registers[32];
 } CtContext;
 
-#define CT_VALIDREGISTER(r) assert((r) < sizeof(ctx->registers) / sizeof(ctx->registers[0]))
+#define CT_VALIDREGISTER(r, regfile) assert((r) < sizeof(regfile.atoms) / sizeof(regfile.atoms[0]))
 
-#define CT_BINARYOP()
 
 typedef struct {
 	CtContext ctx;
 	CtImage img;
 } CtEngine;
-
 
 
 CtContext*
