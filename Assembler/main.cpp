@@ -55,6 +55,15 @@ static const std::map<std::string, InstrSpec> instrMap = {
 	{"bnot", {instrBitNot, {1,}}},
 	{"bshl", {instrBitShl, {1, 1}}},
 	{"bshr", {instrBitShr, {1, 1}}},
+	{"cmpi", {instrCmpI, {1, 1}}},
+	{"cmpu", {instrCmpU, {1, 1}}},
+	{"cmpf", {instrCmpF, {1, 1}}},
+	{"eq", {instrEq, {1}}},
+	{"neq", {instrNotEq, {1}}},
+	{"less", {instrLess, {1}}},
+	{"lesseq", {instrLessEq, {1}}},
+	{"great", {instrGreater, {1}}},
+	{"greateq", {instrGreaterEq, {1}}},
 };
 
 static std::string

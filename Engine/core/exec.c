@@ -84,6 +84,20 @@ check_type(&ctx->registers, r1, Type); \
 ctx->registers.atoms[r1].AtomField = Operation ctx->registers.atoms[r1].AtomField;
 
 
+#define INSTR_CMP(Type, AtomField) \
+r1 = instrs[ctx->ip++]; \
+r2 = instrs[ctx->ip++]; \
+check_type(&ctx->registers, r1, Type); \
+check_type(&ctx->registers, r2, Type); \
+ctx->registers.atoms[r1].as_int =  ctx->registers.atoms[r1].AtomField - ctx->registers.atoms[r2].AtomField;
+
+
+#define INSTR_CMPRESOLVERS(Operation) \
+r1 = instrs[ctx->ip++]; \
+if (ctx->registers.atoms[r1].as_int Operation 0) {ctx->registers.atoms[r1].as_bool = 1;} \
+else {ctx->registers.atoms[r1].as_bool = 0;} 
+
+
 void
 Cute_exec(CtContext* ctx) 
 {
@@ -248,6 +262,47 @@ Cute_exec(CtContext* ctx)
 			
 		case instrBitShr:
 			INSTR_BINARYOP(CtAtomType_UInt, as_uint, >>);
+			break;
+
+		case instrCmpI:
+			INSTR_CMP(CtAtomType_Int, as_int);
+			break;
+
+		case instrCmpU:
+			INSTR_CMP(CtAtomType_UInt, as_float);
+			break;
+
+		case instrCmpF:
+			INSTR_CMP(CtAtomType_Float, as_uint);
+			break;
+
+		case instrEq:
+			INSTR_CMPRESOLVERS(==);
+			break;
+
+		case instrNotEq:
+			INSTR_CMPRESOLVERS(!=);
+			break;
+
+		case instrLess:
+			INSTR_CMPRESOLVERS(<);
+			break;
+
+		case instrLessEq:
+			INSTR_CMPRESOLVERS(<=);
+			break;
+
+		case instrGreater:
+			INSTR_CMPRESOLVERS(>);
+			break;
+
+		case instrGreaterEq:
+			INSTR_CMPRESOLVERS(>=);
+			break;
+
+		case instrJmp:
+		case instrJmpIf:
+		case instrJmpIfNot:
 			break;
 		}
 	}

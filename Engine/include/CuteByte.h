@@ -46,7 +46,22 @@ typedef enum {
 	instrBitNot      = 0x73,
 	instrBitXor      = 0x74,
 	instrBitShl      = 0x75,
-	instrBitShr      = 0x76     
+	instrBitShr      = 0x76, 
+
+	instrCmpI        = 0x80,
+	instrCmpU        = 0x81,
+	instrCmpF        = 0x82,
+
+	instrEq          = 0x90,
+	instrNotEq       = 0x91,
+	instrLess        = 0x92,
+	instrLessEq      = 0x93,
+	instrGreater     = 0x94,
+	instrGreaterEq   = 0x95,
+
+	instrJmp         = 0xA0,
+	instrJmpIf       = 0xA1,
+	instrJmpIfNot    = 0xA2
 
 } CtInstruction;
 
