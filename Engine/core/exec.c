@@ -63,13 +63,6 @@ check_type(CtRegisterFile* registers, uint index, CtAtomType expected_type) {
 }
 
 
-#define INSTR_LOAD(type) \
-r1 = instrs[ctx->ip++]; \
-r2 = load32(instrs, &ctx->ip); \
-ctx->registers.atoms[r1].raw = r2; \
-ctx->registers.types[r1] = type;
-
-
 #define INSTR_BINARYOP(Type, AtomField, Operation) \
 r1 = instrs[ctx->ip++]; \
 r2 = instrs[ctx->ip++]; \
@@ -95,19 +88,37 @@ ctx->registers.atoms[r1].as_int =  ctx->registers.atoms[r1].AtomField - ctx->reg
 #define INSTR_CMPRESOLVERS(Operation) \
 r1 = instrs[ctx->ip++]; \
 if (ctx->registers.atoms[r1].as_int Operation 0) {ctx->registers.atoms[r1].as_bool = 1;} \
-else {ctx->registers.atoms[r1].as_bool = 0;} 
+else {ctx->registers.atoms[r1].as_bool = 0;} \
+ctx->registers.types[r1] = CtAtomType_Bool;
+
+
+#define INSTR_JMP() \
+r1 = instrs[ctx->ip++]; \
+check_type(&ctx->registers, r1, CtAtomType_Int); \
+ctx->ip += ctx->registers.atoms[r1].as_int; \
+if (ctx->ip >= ctx->image->header.instruction_count) {printf("Out of range ip\n"); exit(1);};
+
+
+#define INSTR_JMPABS() \
+r1 = instrs[ctx->ip++]; \
+check_type(&ctx->registers, r1, CtAtomType_Int); \
+ctx->ip = ctx->registers.atoms[r1].as_int; \
+if (ctx->ip >= ctx->image->header.instruction_count) {printf("Out of range ip\n"); exit(1);};
 
 
 void
 Cute_exec(CtContext* ctx) 
 {
 	CtInstructionSize* instrs = ctx->image->instruction_pool;
-		
+	
+	
 	uint64_t r1;
 	uint64_t r2;
 	uint64_t r3;
 
 	float f;
+	int32_t i;
+	uint32_t u;
 
 	while(true)
 	{
@@ -143,25 +154,33 @@ Cute_exec(CtContext* ctx)
 			break;
 
 		case instrLoadI:
-			INSTR_LOAD(CtAtomType_Int);
+			r1 = instrs[ctx->ip++];
+			u = load32(instrs, &ctx->ip);
+			memcpy(&i, &u, sizeof(i)); 
+			ctx->registers.atoms[r1].as_int = i;
+			ctx->registers.types[r1] = CtAtomType_Int;
 			break;
 
 		case instrLoadU:
-			INSTR_LOAD(CtAtomType_UInt);
+			r1 = instrs[ctx->ip++];
+			u = load32(instrs, &ctx->ip);
+			ctx->registers.atoms[r1].as_uint = u;
+			ctx->registers.types[r1] = CtAtomType_UInt;
 			break;
 
 		case instrLoadF:
-			// This is temporary. Once load instruction actually loads from a constant pool,
-			// this won't be needed.
 			r1 = instrs[ctx->ip++];
-			r2 = load32(instrs, &ctx->ip);
-			memcpy(&f, &r2, sizeof(f)); 
+			u = load32(instrs, &ctx->ip);
+			memcpy(&f, &u, sizeof(f)); 
 			ctx->registers.atoms[r1].as_float= f;
 			ctx->registers.types[r1] = CtAtomType_Float;
 			break;
 
 		case instrLoadB:
-			INSTR_LOAD(CtAtomType_Bool);
+			r1 = instrs[ctx->ip++];
+			u = load32(instrs, &ctx->ip);
+			ctx->registers.atoms[r1].as_bool = u;
+			ctx->registers.types[r1] = CtAtomType_Bool;
 			break;
 
 		case instrAddI:
@@ -301,8 +320,51 @@ Cute_exec(CtContext* ctx)
 			break;
 
 		case instrJmp:
+			INSTR_JMP();
+			break;
+
 		case instrJmpIf:
+			r2 = instrs[ctx->ip++];
+			check_type(&ctx->registers, r2, CtAtomType_Bool);
+			if (ctx->registers.atoms[r2].as_bool) {
+				INSTR_JMP();
+				continue;
+			}
+			ctx->ip++;
+			break;
+			
 		case instrJmpIfNot:
+			r2 = instrs[ctx->ip++];
+			check_type(&ctx->registers, r2, CtAtomType_Bool);
+			if (!ctx->registers.atoms[r2].as_bool) {
+				INSTR_JMP();
+				continue;
+			}
+			ctx->ip++;
+			break;
+
+		case instrJmpAbs:
+			INSTR_JMPABS();
+			break;
+
+		case instrJmpAbsIf:
+			r2 = instrs[ctx->ip++];
+			check_type(&ctx->registers, r2, CtAtomType_Bool);
+			if (ctx->registers.atoms[r2].as_bool) {
+				INSTR_JMPABS();
+				continue;
+			}
+			ctx->ip++;
+			break;
+			
+		case instrJmpAbsIfNot:
+			r2 = instrs[ctx->ip++];
+			check_type(&ctx->registers, r2, CtAtomType_Bool);
+			if (!ctx->registers.atoms[r2].as_bool) {
+				INSTR_JMPABS();
+				continue;
+			}
+			ctx->ip++;
 			break;
 		}
 	}

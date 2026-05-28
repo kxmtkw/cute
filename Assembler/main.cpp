@@ -64,6 +64,12 @@ static const std::map<std::string, InstrSpec> instrMap = {
 	{"lesseq", {instrLessEq, {1}}},
 	{"great", {instrGreater, {1}}},
 	{"greateq", {instrGreaterEq, {1}}},
+	{"jmp", {instrJmp, {1}}},
+	{"jmpif", {instrJmpIf, {1, 1}}},
+	{"jmpifnot", {instrJmpIfNot, {1, 1}}},
+	{"jma", {instrJmpAbs, {1}}},
+	{"jmaif", {instrJmpAbsIf, {1, 1}}},
+	{"jmaifnot", {instrJmpAbsIfNot, {1, 1}}},
 };
 
 static std::string
@@ -136,7 +142,7 @@ parseRegisterOrByte(const std::string& token)
 	return static_cast<uint8_t>(value);
 }
 
-static uint32_t
+static int32_t
 parseU32(const std::string& token)
 {
 	long long value = 0;
@@ -146,7 +152,7 @@ parseU32(const std::string& token)
 		throw std::runtime_error("invalid 4-byte integer argument: " + token);
 	}
 
-	return static_cast<uint32_t>(static_cast<int32_t>(value));
+	return value;
 }
 
 static uint32_t

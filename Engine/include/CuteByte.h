@@ -61,7 +61,11 @@ typedef enum {
 
 	instrJmp         = 0xA0,
 	instrJmpIf       = 0xA1,
-	instrJmpIfNot    = 0xA2
+	instrJmpIfNot    = 0xA2,
+
+	instrJmpAbs          = 0xA3,
+	instrJmpAbsIf        = 0xA4,
+	instrJmpAbsIfNot     = 0xA5,
 
 } CtInstruction;
 
