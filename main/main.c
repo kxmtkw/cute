@@ -1,16 +1,12 @@
-#include "CuteByte.h"
 #include "CuteEngine.h"
-#include <stdio.h>
-
 
 int
 main() {
-	CtImage img;
-	CtImage_init(&img);
-	CtImage_read(&img, "demo.cti");
-
-	CtContext* ctx = Cute_newContext(&img);
-	Cute_run(ctx, 0);
-   
+	
+	ctEngine engine;
+	ct_engine_init(&engine);
+	ct_engine_loadFile(&engine, "demo.cti");
+	ct_engine_run(&engine);
+	ct_engine_end(&engine);
 	return 0;
 }

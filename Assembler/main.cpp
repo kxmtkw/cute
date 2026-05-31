@@ -12,11 +12,11 @@
 #include <vector>
 
 extern "C" {
-#include "CuteByte.h"
+#include "CuteInstr.h"
 }
 
 struct InstrSpec {
-	CtInstruction opcode;
+	ctInstruction opcode;
 	std::vector<size_t> arg_lengths;
 };
 
@@ -70,6 +70,8 @@ static const std::map<std::string, InstrSpec> instrMap = {
 	{"jma", {instrJmpAbs, {1}}},
 	{"jmaif", {instrJmpAbsIf, {1, 1}}},
 	{"jmaifnot", {instrJmpAbsIfNot, {1, 1}}},
+	{"call", {instrCall, {4}}},
+	{"ret", {instrReturn, {}}},
 };
 
 static std::string
@@ -171,24 +173,113 @@ parseF32Bits(const std::string& token)
 	return bits;
 }
 
+struct Procedure {
+	std::string name;
+	uint64_t id;
+	uint64_t bytecode_index;
+	uint32_t locals_size;
+};
+
 static std::vector<uint8_t>
-assemble(const std::vector<std::string>& tokens)
+assemble(const std::vector<std::string>& tokens, std::vector<Procedure>& procedures)
 {
 	std::vector<uint8_t> bytecode;
+	std::map<uint64_t, bool> procedureIds; // track used numeric procedure ids
 
 	for (size_t i = 0; i < tokens.size();) {
-		const std::string& mnemonic = tokens[i++];
-		const auto specIt = instrMap.find(mnemonic);
+		const std::string& token = tokens[i];
+
+		// Check if this is a procedure definition (name [ instructions... ])
+		if (i + 1 < tokens.size() && tokens[i + 1] == "[") {
+			// find matching closing ]
+			size_t p = i + 2;
+			while (p < tokens.size() && tokens[p] != "]") {
+				++p;
+			}
+			if (p >= tokens.size() || tokens[p] != "]") {
+				throw std::runtime_error("unterminated procedure block for: " + token);
+			}
+
+			// parse procedure id (must be numeric). user requested syntax: id [ instructions ]
+			uint64_t procId = 0;
+			try {
+				procId = std::stoull(token, nullptr, 0);
+			} catch (const std::exception&) {
+				throw std::runtime_error("procedure id must be numeric: " + token);
+			}
+
+			if (procedureIds.find(procId) != procedureIds.end()) {
+				throw std::runtime_error("procedure id already defined: " + token);
+			}
+
+			Procedure proc;
+			proc.name = "";
+			proc.id = procId;
+			proc.bytecode_index = bytecode.size();
+			proc.locals_size = 0;
+
+			procedures.push_back(proc);
+			procedureIds[procId] = true;
+
+			// assemble instructions inside the block [ ... ]
+			size_t inner = i + 2;
+			while (inner < p) {
+				const std::string& innerTok = tokens[inner];
+				const auto specItInner = instrMap.find(innerTok);
+				if (specItInner == instrMap.end()) {
+					throw std::runtime_error("unknown instruction in procedure '" + token + "': " + innerTok);
+				}
+
+				const InstrSpec& specInner = specItInner->second;
+				appendU8(bytecode, static_cast<uint8_t>(specInner.opcode));
+
+				++inner;
+
+				for (size_t argIndex = 0; argIndex < specInner.arg_lengths.size(); ++argIndex) {
+					if (inner >= p) {
+						throw std::runtime_error("missing argument for instruction: " + innerTok);
+					}
+
+					const std::string& arg = tokens[inner++];
+					const size_t argLength = specInner.arg_lengths[argIndex];
+
+					if (argLength == 1) {
+						appendU8(bytecode, parseRegisterOrByte(arg));
+						continue;
+					}
+
+					if (argLength == 4) {
+						if (innerTok == "loadf") {
+							appendU32(bytecode, parseF32Bits(arg));
+						} else {
+							appendU32(bytecode, parseU32(arg));
+						}
+						continue;
+					}
+
+					throw std::runtime_error("unsupported argument width in instruction map: " + innerTok);
+				}
+			}
+
+			// advance i past the entire procedure block (name [ ... ])
+			i = p + 1;
+			continue;
+		}
+
+		// Otherwise, parse as instruction
+		const auto specIt = instrMap.find(token);
 		if (specIt == instrMap.end()) {
-			throw std::runtime_error("unknown instruction: " + mnemonic);
+			throw std::runtime_error("unknown instruction: " + token);
 		}
 
 		const InstrSpec& spec = specIt->second;
 		appendU8(bytecode, static_cast<uint8_t>(spec.opcode));
 
+		++i;
+
 		for (size_t argIndex = 0; argIndex < spec.arg_lengths.size(); ++argIndex) {
 			if (i >= tokens.size()) {
-				throw std::runtime_error("missing argument for instruction: " + mnemonic);
+				throw std::runtime_error("missing argument for instruction: " + token);
 			}
 
 			const std::string& arg = tokens[i++];
@@ -200,7 +291,7 @@ assemble(const std::vector<std::string>& tokens)
 			}
 
 			if (argLength == 4) {
-				if (mnemonic == "loadf") {
+				if (token == "loadf") {
 					appendU32(bytecode, parseF32Bits(arg));
 				} else {
 					appendU32(bytecode, parseU32(arg));
@@ -208,24 +299,28 @@ assemble(const std::vector<std::string>& tokens)
 				continue;
 			}
 
-			throw std::runtime_error("unsupported argument width in instruction map: " + mnemonic);
+			throw std::runtime_error("unsupported argument width in instruction map: " + token);
 		}
+	}
+
+	if (procedures.empty()) {
+		throw std::runtime_error("no procedures defined");
 	}
 
 	return bytecode;
 }
 
 static std::string
-imageCodeToString(CtImageCode code)
+imageCodeToString(ctImageCode code)
 {
 	switch (code) {
-	case CtImageCode_Success:
+	case ctImageCode_Success:
 		return "success";
-	case CtImageCode_FileNotFound:
+	case ctImageCode_FileNotFound:
 		return "file not found";
-	case CtImageCode_ReadWriteFailure:
+	case ctImageCode_ReadWriteFailure:
 		return "read/write failure";
-	case CtImageCode_InvalidImage:
+	case ctImageCode_InvalidImage:
 		return "invalid image";
 	}
 
@@ -233,39 +328,40 @@ imageCodeToString(CtImageCode code)
 }
 
 static void
-writeImage(const std::string& path, const std::vector<uint8_t>& bytes)
+writeImage(const std::string& path, const std::vector<uint8_t>& bytes, const std::vector<Procedure>& procedures)
 {
-	CtImage img;
-	CtImage_init(&img);
+	ctImage img;
 
-	img.header.procedure_count = 1;
+	img.header.procedure_count = procedures.size();
 	img.header.instruction_count = bytes.size();
 
-	img.procedure_table = static_cast<CtImageProcedure*>(std::malloc(sizeof(CtImageProcedure)));
+	img.procedure_table = static_cast<ctImageProcedure*>(std::malloc(procedures.size() * sizeof(ctImageProcedure)));
 	if (img.procedure_table == nullptr) {
-		CtImage_del(&img);
+		ct_image_free(&img);
 		throw std::runtime_error("failed to allocate procedure table");
 	}
 
-	img.instruction_pool = static_cast<CtInstructionSize*>(std::malloc(bytes.size() * sizeof(CtInstructionSize)));
+	img.instruction_pool = static_cast<ctInstructionSize*>(std::malloc(bytes.size() * sizeof(ctInstructionSize)));
 	if (img.instruction_pool == nullptr && !bytes.empty()) {
-		CtImage_del(&img);
+		ct_image_free(&img);
 		throw std::runtime_error("failed to allocate instruction pool");
 	}
 
-	img.procedure_table[0].id = 0;
-	img.procedure_table[0].bytecode_index = 0;
-	img.procedure_table[0].locals_size = 0;
+	for (size_t i = 0; i < procedures.size(); ++i) {
+		img.procedure_table[i].id = procedures[i].id;
+		img.procedure_table[i].bytecode_index = procedures[i].bytecode_index;
+		img.procedure_table[i].locals_size = procedures[i].locals_size;
+	}
 
 	for (size_t i = 0; i < bytes.size(); ++i) {
 		img.instruction_pool[i] = bytes[i];
 	}
 
-	const CtImageCode code = CtImage_write(&img, path.c_str());
-	CtImage_del(&img);
+	const ctImageCode code = ct_image_write(&img, path.c_str());
+	ct_image_free(&img);
 
-	if (code != CtImageCode_Success) {
-		throw std::runtime_error("failed to write CtImage: " + imageCodeToString(code));
+	if (code != ctImageCode_Success) {
+		throw std::runtime_error("failed to write ctImage: " + imageCodeToString(code));
 	}
 }
 
@@ -283,10 +379,11 @@ main(int argc, char** argv)
 
 		const std::string source = readFile(inputPath);
 		const std::vector<std::string> tokens = tokenize(source);
-		const std::vector<uint8_t> bytecode = assemble(tokens);
+		std::vector<Procedure> procedures;
+		const std::vector<uint8_t> bytecode = assemble(tokens, procedures);
 
-		writeImage(outputPath, bytecode);
-		//std::cout << "Wrote CtImage with " << bytecode.size() << " instruction bytes to " << outputPath << '\n';
+		writeImage(outputPath, bytecode, procedures);
+		std::cout << "Wrote ctImage with " << bytecode.size() << " instruction bytes to " << outputPath << '\n';
 		return 0;
 	} catch (const std::exception& ex) {
 		std::cerr << "assembler error: " << ex.what() << '\n';

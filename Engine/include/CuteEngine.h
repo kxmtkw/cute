@@ -4,44 +4,35 @@
 
 #include <stdint.h>
 #include "CuteAtom.h"
-#include "CuteByte.h"
+#include "CuteInstr.h"
 
-
-typedef struct {
-	uint64_t procedure_id;
-	uint32_t locals_count;
-	CtAtom* local_atoms;
-} CtCallFrame;
-
+#include "engine/context.h"
+#include "engine/failure.h"
 
 typedef struct {
-	CtAtom atoms[32];
-	CtAtomTypeSize types[32];
-} CtRegisterFile;
-
-typedef struct {
-	CtImage* image;
-	CtCallFrame call_frame;
-	CtRegisterFile registers;
-	uint64_t	ip;
-} CtContext;
-
-#define CT_VALIDREGISTER(r, regfile) assert((r) < sizeof(regfile.atoms) / sizeof(regfile.atoms[0]))
+	ctImage    image;
+	ctContext* ctx;
+} ctEngine;
 
 
-typedef struct {
-	CtContext ctx;
-	CtImage img;
-} CtEngine;
-
-
-CtContext*
-Cute_newContext(CtImage* img);
-
+// Intialize the engine
 void
-Cute_run(CtContext* ctx, uint64_t procedure_id);
+ct_engine_init(ctEngine* engine);
 
+// End the engine and free all resources
 void
-Cute_exec(CtContext* ctx);
+ct_engine_end(ctEngine* engine);
+
+// Load an image file. For now, only one image can be loaded.
+void
+ct_engine_loadFile(ctEngine* engine, const char* filepath);
+
+// Run the engine with the loaded image file
+void
+ct_engine_run(ctEngine* engine);
+
+//
+void
+ct_engine_reportFailure(ctFailure failure);
 
 #endif // CUTE_ENGINE_H

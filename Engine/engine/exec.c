@@ -1,16 +1,19 @@
-#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "CuteByte.h"
 #include "CuteAtom.h"
-#include "CuteEngine.h"
+#include "CuteConfig.h"
+#include "CuteInstr.h"
+
+
+#include "context.h"
+
 
 
 static inline uint32_t
-load32(CtInstructionSize* instrs, uint64_t* ip) {
+load32(ctInstructionSize* instrs, uint64_t* ip) {
 	uint32_t u;
 	memcpy(&u, &instrs[*ip], sizeof(u));
 	*ip += 4;
@@ -19,39 +22,54 @@ load32(CtInstructionSize* instrs, uint64_t* ip) {
 
 
 static inline void 
-out(CtAtom atom, uint32_t fmt) {
-    switch (fmt) {
-        case 0:
-            for (int i = 63; i >= 0; i--)
-                putchar((atom.raw >> i) & 1 ? '1' : '0');
-            putchar('\n');
-            break;
-        case 1: printf("%lx\n",  atom.as_uint); break;
-        case 2: printf("%ld\n", atom.as_int); break;
-        case 3: printf("%lu\n", atom.as_uint); break;
-		case 4: printf("%f\n",  atom.as_float); break;
-        case 5: printf("%s\n",   atom.raw ? "true" : "false"); break;
-		default: printf("Unknown format: %d\n", fmt); break;
-    }
+out(ctAtom atom, ctAtomType type, uint32_t fmt) {
+
+	if (fmt == 0) {
+		
+		switch (type) {
+
+			case ctAtomType_NoneType:
+				printf("[ None ]\n"); break;
+			case ctAtomType_Int:
+				printf("[ Int %ld ]\n", atom.as_int); break;
+			case ctAtomType_UInt:
+				printf("[ UInt %lu ]\n", atom.as_uint); break;
+			case ctAtomType_Float:
+				printf("[ Float %f ]\n",  atom.as_float); break;
+			case ctAtomType_Bool:
+				printf("[ Bool %s ]\n",  atom.as_bool ? "true" : "false"); break;
+			case ctAtomType_Container:
+				printf("[ Container ]\n"); break;
+			break;
+		}
+
+	} else if (fmt == 1) {
+		for (int i = 63; i >= 0; i--)
+			putchar((atom.raw >> i) & 1 ? '1' : '0');
+		putchar('\n');
+	} else { 
+		printf("Unknown format: %d\n", fmt);
+	}
+
 }
 
 
 static inline const char*
-type_name(CtAtomType type) {
+type_name(ctAtomType type) {
 	switch (type) {
-		case CtAtomType_NoneType: return "NoneType";
-		case CtAtomType_Int: return "Int";
-		case CtAtomType_UInt: return "UInt";
-		case CtAtomType_Float: return "Float";
-		case CtAtomType_Bool: return "Bool";
-		case CtAtomType_Container: return "Container";
+		case ctAtomType_NoneType: return "NoneType";
+		case ctAtomType_Int: return "Int";
+		case ctAtomType_UInt: return "UInt";
+		case ctAtomType_Float: return "Float";
+		case ctAtomType_Bool: return "Bool";
+		case ctAtomType_Container: return "Container";
 		default: return "Unknown";
 	}
 }
 
 
 static inline void
-check_type(CtRegisterFile* registers, uint index, CtAtomType expected_type) {
+check_type(ctRegisterFile* registers, uint index, ctAtomType expected_type) {
 	if (registers->types[index] != expected_type) {
 		printf(
 			"Expected type '%s'. Got '%s'\n",
@@ -89,28 +107,27 @@ ctx->registers.atoms[r1].as_int =  ctx->registers.atoms[r1].AtomField - ctx->reg
 r1 = instrs[ctx->ip++]; \
 if (ctx->registers.atoms[r1].as_int Operation 0) {ctx->registers.atoms[r1].as_bool = 1;} \
 else {ctx->registers.atoms[r1].as_bool = 0;} \
-ctx->registers.types[r1] = CtAtomType_Bool;
+ctx->registers.types[r1] = ctAtomType_Bool;
 
 
 #define INSTR_JMP() \
 r1 = instrs[ctx->ip++]; \
-check_type(&ctx->registers, r1, CtAtomType_Int); \
+check_type(&ctx->registers, r1, ctAtomType_Int); \
 ctx->ip += ctx->registers.atoms[r1].as_int; \
 if (ctx->ip >= ctx->image->header.instruction_count) {printf("Out of range ip\n"); exit(1);};
 
 
 #define INSTR_JMPABS() \
 r1 = instrs[ctx->ip++]; \
-check_type(&ctx->registers, r1, CtAtomType_Int); \
+check_type(&ctx->registers, r1, ctAtomType_Int); \
 ctx->ip = ctx->registers.atoms[r1].as_int; \
 if (ctx->ip >= ctx->image->header.instruction_count) {printf("Out of range ip\n"); exit(1);};
 
 
 void
-Cute_exec(CtContext* ctx) 
+ct_ctx_exec(ctContext* ctx) 
 {
-	CtInstructionSize* instrs = ctx->image->instruction_pool;
-	
+	ctInstructionSize* instrs = ctx->image->instruction_pool;
 	
 	uint64_t r1;
 	uint64_t r2;
@@ -120,9 +137,9 @@ Cute_exec(CtContext* ctx)
 	int32_t i;
 	uint32_t u;
 
-	while(true)
+	while(ctx->running)
 	{
-	CtInstruction instr = instrs[ctx->ip++];
+	ctInstruction instr = instrs[ctx->ip++];
 	//printf("instruction 0x%x ip: %lu\n", instr, ctx->ip);
 
 		switch (instr) 
@@ -138,7 +155,7 @@ Cute_exec(CtContext* ctx)
 		case instrOut:
 			r1 = instrs[ctx->ip++];
 			r2 = instrs[ctx->ip++];
-			out(ctx->registers.atoms[r1], r2);
+			out(ctx->registers.atoms[r1], ctx->registers.types[r1], r2);
 			break;
 
 		case instrTypeOf:
@@ -158,14 +175,14 @@ Cute_exec(CtContext* ctx)
 			u = load32(instrs, &ctx->ip);
 			memcpy(&i, &u, sizeof(i)); 
 			ctx->registers.atoms[r1].as_int = i;
-			ctx->registers.types[r1] = CtAtomType_Int;
+			ctx->registers.types[r1] = ctAtomType_Int;
 			break;
 
 		case instrLoadU:
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
 			ctx->registers.atoms[r1].as_uint = u;
-			ctx->registers.types[r1] = CtAtomType_UInt;
+			ctx->registers.types[r1] = ctAtomType_UInt;
 			break;
 
 		case instrLoadF:
@@ -173,126 +190,126 @@ Cute_exec(CtContext* ctx)
 			u = load32(instrs, &ctx->ip);
 			memcpy(&f, &u, sizeof(f)); 
 			ctx->registers.atoms[r1].as_float= f;
-			ctx->registers.types[r1] = CtAtomType_Float;
+			ctx->registers.types[r1] = ctAtomType_Float;
 			break;
 
 		case instrLoadB:
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
 			ctx->registers.atoms[r1].as_bool = u;
-			ctx->registers.types[r1] = CtAtomType_Bool;
+			ctx->registers.types[r1] = ctAtomType_Bool;
 			break;
 
 		case instrAddI:
-			INSTR_BINARYOP(CtAtomType_Int, as_int, +);
+			INSTR_BINARYOP(ctAtomType_Int, as_int, +);
 			break;
 
 		case instrSubI:
-			INSTR_BINARYOP(CtAtomType_Int, as_int, -);
+			INSTR_BINARYOP(ctAtomType_Int, as_int, -);
 			break;
 
 		case instrMulI:
-			INSTR_BINARYOP(CtAtomType_Int, as_int, *);
+			INSTR_BINARYOP(ctAtomType_Int, as_int, *);
 			break;
 
 		case instrDivI:
-			INSTR_BINARYOP(CtAtomType_Int, as_int, /);
+			INSTR_BINARYOP(ctAtomType_Int, as_int, /);
 			break;
 
 		case instrModI:
-			INSTR_BINARYOP(CtAtomType_Int, as_int, %);
+			INSTR_BINARYOP(ctAtomType_Int, as_int, %);
 			break;
 
 		case instrNegI:
-			INSTR_UNARYOP(CtAtomType_Int, as_int, -);
+			INSTR_UNARYOP(ctAtomType_Int, as_int, -);
 			break;
 
 		case instrAddU:
-			INSTR_BINARYOP(CtAtomType_UInt, as_uint, +);
+			INSTR_BINARYOP(ctAtomType_UInt, as_uint, +);
 			break;
 
 		case instrSubU:
-			INSTR_BINARYOP(CtAtomType_UInt, as_uint, -);
+			INSTR_BINARYOP(ctAtomType_UInt, as_uint, -);
 			break;
 
 		case instrMulU:
-			INSTR_BINARYOP(CtAtomType_UInt, as_uint, *);
+			INSTR_BINARYOP(ctAtomType_UInt, as_uint, *);
 			break;
 
 		case instrDivU:
-			INSTR_BINARYOP(CtAtomType_UInt, as_uint, /);
+			INSTR_BINARYOP(ctAtomType_UInt, as_uint, /);
 			break;
 
 		case instrModU:
-			INSTR_BINARYOP(CtAtomType_UInt, as_uint, %);
+			INSTR_BINARYOP(ctAtomType_UInt, as_uint, %);
 			break;
 
 		case instrAddF:
-			INSTR_BINARYOP(CtAtomType_Float, as_float, +);
+			INSTR_BINARYOP(ctAtomType_Float, as_float, +);
 			break;	
 
 		case instrSubF:
-			INSTR_BINARYOP(CtAtomType_Float, as_float, -);
+			INSTR_BINARYOP(ctAtomType_Float, as_float, -);
 			break;	
 
 		case instrMulF:
-			INSTR_BINARYOP(CtAtomType_Float, as_float, *);
+			INSTR_BINARYOP(ctAtomType_Float, as_float, *);
 			break;	
 
 		case instrDivF:
-			INSTR_BINARYOP(CtAtomType_Float, as_float, /);
+			INSTR_BINARYOP(ctAtomType_Float, as_float, /);
 			break;	
 
 		case instrNegF:
-			INSTR_UNARYOP(CtAtomType_Float, as_float, -);
+			INSTR_UNARYOP(ctAtomType_Float, as_float, -);
 			break;
 
 		case instrLogicAnd:
-			INSTR_BINARYOP(CtAtomType_Bool, as_bool, &&);
+			INSTR_BINARYOP(ctAtomType_Bool, as_bool, &&);
 			break;
 
 		case instrLogicOr:
-			INSTR_BINARYOP(CtAtomType_Bool, as_bool, ||);
+			INSTR_BINARYOP(ctAtomType_Bool, as_bool, ||);
 			break;
 
 		case instrLogicNot:
-			INSTR_UNARYOP(CtAtomType_Bool, as_bool, !);
+			INSTR_UNARYOP(ctAtomType_Bool, as_bool, !);
 			break;
 
 		case instrBitAnd:
-			INSTR_BINARYOP(CtAtomType_UInt, as_uint, &);
+			INSTR_BINARYOP(ctAtomType_UInt, as_uint, &);
 			break;
 
 		case instrBitOr:
-			INSTR_BINARYOP(CtAtomType_UInt, as_uint, |);
+			INSTR_BINARYOP(ctAtomType_UInt, as_uint, |);
 			break;
 
 		case instrBitNot:
-			INSTR_UNARYOP(CtAtomType_UInt, as_uint, ~);
+			INSTR_UNARYOP(ctAtomType_UInt, as_uint, ~);
 			break;
 
 		case instrBitXor:
-			INSTR_BINARYOP(CtAtomType_UInt, as_uint, ^);
+			INSTR_BINARYOP(ctAtomType_UInt, as_uint, ^);
 			break;
 
 		case instrBitShl:
-			INSTR_BINARYOP(CtAtomType_UInt, as_uint, <<);
+			INSTR_BINARYOP(ctAtomType_UInt, as_uint, <<);
 			break;
 			
 		case instrBitShr:
-			INSTR_BINARYOP(CtAtomType_UInt, as_uint, >>);
+			INSTR_BINARYOP(ctAtomType_UInt, as_uint, >>);
 			break;
 
 		case instrCmpI:
-			INSTR_CMP(CtAtomType_Int, as_int);
+			INSTR_CMP(ctAtomType_Int, as_int);
 			break;
 
 		case instrCmpU:
-			INSTR_CMP(CtAtomType_UInt, as_float);
+			INSTR_CMP(ctAtomType_UInt, as_float);
 			break;
 
 		case instrCmpF:
-			INSTR_CMP(CtAtomType_Float, as_uint);
+			INSTR_CMP(ctAtomType_Float, as_uint);
 			break;
 
 		case instrEq:
@@ -325,7 +342,7 @@ Cute_exec(CtContext* ctx)
 
 		case instrJmpIf:
 			r2 = instrs[ctx->ip++];
-			check_type(&ctx->registers, r2, CtAtomType_Bool);
+			check_type(&ctx->registers, r2, ctAtomType_Bool);
 			if (ctx->registers.atoms[r2].as_bool) {
 				INSTR_JMP();
 				continue;
@@ -335,7 +352,7 @@ Cute_exec(CtContext* ctx)
 			
 		case instrJmpIfNot:
 			r2 = instrs[ctx->ip++];
-			check_type(&ctx->registers, r2, CtAtomType_Bool);
+			check_type(&ctx->registers, r2, ctAtomType_Bool);
 			if (!ctx->registers.atoms[r2].as_bool) {
 				INSTR_JMP();
 				continue;
@@ -349,7 +366,7 @@ Cute_exec(CtContext* ctx)
 
 		case instrJmpAbsIf:
 			r2 = instrs[ctx->ip++];
-			check_type(&ctx->registers, r2, CtAtomType_Bool);
+			check_type(&ctx->registers, r2, ctAtomType_Bool);
 			if (ctx->registers.atoms[r2].as_bool) {
 				INSTR_JMPABS();
 				continue;
@@ -359,13 +376,25 @@ Cute_exec(CtContext* ctx)
 			
 		case instrJmpAbsIfNot:
 			r2 = instrs[ctx->ip++];
-			check_type(&ctx->registers, r2, CtAtomType_Bool);
+			check_type(&ctx->registers, r2, ctAtomType_Bool);
 			if (!ctx->registers.atoms[r2].as_bool) {
 				INSTR_JMPABS();
 				continue;
 			}
 			ctx->ip++;
 			break;
+
+		case instrCall:
+			r1 = load32(instrs, &ctx->ip);
+			ct_ctx_callProcedure(ctx, r1);
+			break;
+
+		case instrReturn:
+			ct_ctx_returnProcedure(ctx);
+			break;
+
+		default:
+			ct_ctx_reportFailure(ctx, (ctFailure){"Illegal Instruction."});
 		}
 	}
 

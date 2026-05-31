@@ -1,6 +1,6 @@
 
-#ifndef CUTE_BYTE_H
-#define CUTE_BYTE_H
+#ifndef CUTE_INSTR_H
+#define CUTE_INSTR_H
 
 #include <stdint.h>
 
@@ -67,56 +67,59 @@ typedef enum {
 	instrJmpAbsIf        = 0xA4,
 	instrJmpAbsIfNot     = 0xA5,
 
-} CtInstruction;
+	instrCall        = 0xB0,
+	instrReturn      = 0xB1
 
-typedef uint8_t CtInstructionSize;
+} ctInstruction;
 
-// Image Structure
+typedef uint8_t ctInstructionSize;
 
+
+static const uint32_t ctMagicId = 0x12345678; 
 
 typedef struct {
 	uint32_t magic_id;
 	uint64_t procedure_count;
 	uint64_t instruction_count;
-} CtImageHeader;
+} ctImageHeader;
 
 
 typedef struct {
 	uint64_t id;
 	uint64_t bytecode_index;
 	uint32_t locals_size;
-} CtImageProcedure;
+} ctImageProcedure;
 
 
 typedef struct {
-	CtImageHeader header;
-	CtImageProcedure* procedure_table;
-	CtInstructionSize* instruction_pool;
-} CtImage;
+	ctImageHeader header;
+	ctImageProcedure* procedure_table;
+	ctInstructionSize* instruction_pool;
+} ctImage;
 
 
 typedef enum {
-	CtImageCode_Success,
-	CtImageCode_FileNotFound,
-	CtImageCode_ReadWriteFailure,
-	CtImageCode_InvalidImage
-} CtImageCode;
+	ctImageCode_Success,
+	ctImageCode_FileNotFound,
+	ctImageCode_ReadWriteFailure,
+	ctImageCode_InvalidImage
+} ctImageCode;
 
 
+// Write an already intialized image to a file
+ctImageCode 
+ct_image_write(ctImage *img, const char *filepath);
+
+// Load an image from a file
+ctImageCode 
+ct_image_read(ctImage *img, const char *filepath);
+
+// Free the image's resources.
 void 
-CtImage_init(CtImage *img);
+ct_image_free(ctImage *img);
 
+// Print the image for debugging
 void 
-CtImage_del(CtImage *img);
+ct_image_print(const ctImage* img);
 
-CtImageCode 
-CtImage_write(CtImage *img, const char *filepath);
-
-CtImageCode 
-CtImage_read(CtImage *img, const char *filepath);
-
-void CtImage_print(const CtImage* img);
-
-static const uint32_t CtMagicId = 0x12345678; 
-
-#endif // CUTE_BYTE_H
+#endif // CUTE_INSTR_H

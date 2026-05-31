@@ -1,15 +1,13 @@
 
-file(GLOB CORE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/core/*.c")
+file(GLOB ENGINE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/engine/*.c")
 file(GLOB IMAGE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/image/*.c")
-file(GLOB ATOM_SRC "${CMAKE_CURRENT_SOURCE_DIR}/atom/*.c")
 
 add_library(
 	CuteEngine
 	STATIC
 
-    ${CORE_SRC}
+    ${ENGINE_SRC}
 	${IMAGE_SRC}
-	${ATOM_SRC}
 )
 
 target_compile_options(
@@ -20,10 +18,9 @@ target_compile_options(
 
 target_include_directories(
     CuteEngine
-    PRIVATE
+    PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
-
 
 target_include_directories(
     CuteEngine
