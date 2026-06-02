@@ -7,11 +7,12 @@
 #include "CuteInstr.h"
 
 #include "engine/context.h"
-#include "engine/failure.h"
+#include "containers/container.h"
 
 typedef struct {
-	ctImage    image;
-	ctContext* ctx;
+	ctImage            image;
+	ctContainerManager manager;
+	ctContext*         ctx;
 } ctEngine;
 
 

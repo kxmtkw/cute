@@ -8,6 +8,7 @@
 #include "CuteInstr.h"
 
 
+#include "containers/container.h"
 #include "context.h"
 
 
@@ -22,24 +23,28 @@ load32(ctInstructionSize* instrs, uint64_t* ip) {
 
 
 static inline void 
-out(ctAtom atom, ctAtomType type, uint32_t fmt) {
+out(ctAtom atom, ctAtomTypeSize type, uint32_t fmt) {
 
 	if (fmt == 0) {
 		
-		switch (type) {
+		const char* name = ct_atom_stringforms[type];
 
+		switch (type) {
+			
 			case ctAtomType_NoneType:
-				printf("[ None ]\n"); break;
+				printf("[ %s ]\n", name); break;
 			case ctAtomType_Int:
-				printf("[ Int %ld ]\n", atom.as_int); break;
+				printf("[ %s %ld ]\n", name, atom.as_int); break;
 			case ctAtomType_UInt:
-				printf("[ UInt %lu ]\n", atom.as_uint); break;
+				printf("[ %s %lu ]\n", name, atom.as_uint); break;
 			case ctAtomType_Float:
-				printf("[ Float %f ]\n",  atom.as_float); break;
+				printf("[ %s %f ]\n", name, atom.as_float); break;
 			case ctAtomType_Bool:
-				printf("[ Bool %s ]\n",  atom.as_bool ? "true" : "false"); break;
+				printf("[ %s %u ]\n", name, atom.as_bool ? 1 : 0); break;
+			case ctAtomType_Char:
+				printf("[ %s %c ]\n", name, atom.as_char); break;
 			case ctAtomType_Container:
-				printf("[ Container ]\n"); break;
+				printf("[ %s %p ]\n", name, atom.as_container); break;
 			break;
 		}
 
@@ -54,27 +59,14 @@ out(ctAtom atom, ctAtomType type, uint32_t fmt) {
 }
 
 
-static inline const char*
-type_name(ctAtomType type) {
-	switch (type) {
-		case ctAtomType_NoneType: return "NoneType";
-		case ctAtomType_Int: return "Int";
-		case ctAtomType_UInt: return "UInt";
-		case ctAtomType_Float: return "Float";
-		case ctAtomType_Bool: return "Bool";
-		case ctAtomType_Container: return "Container";
-		default: return "Unknown";
-	}
-}
-
 
 static inline void
 check_type(ctRegisterFile* registers, uint index, ctAtomType expected_type) {
 	if (registers->types[index] != expected_type) {
 		printf(
 			"Expected type '%s'. Got '%s'\n",
-			type_name(expected_type),
-			type_name(registers->types[index])
+			ct_atom_stringforms[expected_type],
+			ct_atom_stringforms[registers->types[index]]
 		);
 		exit(1);
 	};
@@ -136,17 +128,20 @@ ct_ctx_exec(ctContext* ctx)
 	float f;
 	int32_t i;
 	uint32_t u;
+	ctContainer* con;
+
+	ctTypedAtom typed;
 
 	while(ctx->running)
 	{
 	ctInstruction instr = instrs[ctx->ip++];
-	//printf("instruction 0x%x ip: %lu\n", instr, ctx->ip);
+	printf("instruction 0x%x ip: %lu\n", instr, ctx->ip);
 
 		switch (instr) 
 		{
 
 		case instrHalt:
-			exit(instrs[ctx->ip++]);
+			ctx->return_code = instrs[ctx->ip++];
 			return;
 
 		case instrNull:
@@ -160,7 +155,7 @@ ct_ctx_exec(ctContext* ctx)
 
 		case instrTypeOf:
 			r1 = instrs[ctx->ip++];
-			printf("%s\n", type_name(ctx->registers.types[r1]));
+			printf("%s\n", ct_atom_stringforms[ctx->registers.types[r1]]);
 			break;
 
 		case instrMov:
@@ -198,6 +193,13 @@ ct_ctx_exec(ctContext* ctx)
 			u = load32(instrs, &ctx->ip);
 			ctx->registers.atoms[r1].as_bool = u;
 			ctx->registers.types[r1] = ctAtomType_Bool;
+			break;
+
+		case instrLoadC:
+			r1 = instrs[ctx->ip++];
+			u = load32(instrs, &ctx->ip);
+			ctx->registers.atoms[r1].as_char = u;
+			ctx->registers.types[r1] = ctAtomType_Char;
 			break;
 
 		case instrAddI:
@@ -391,6 +393,53 @@ ct_ctx_exec(ctContext* ctx)
 
 		case instrReturn:
 			ct_ctx_returnProcedure(ctx);
+			break;
+
+		case instrConNew:
+			r1 = instrs[ctx->ip++];
+			check_type(&ctx->registers, r1, ctAtomType_UInt);
+			u = ctx->registers.atoms[r1].as_uint;
+			con = ct_containers_newContainer(ctx->containers, u);
+			ctx->registers.atoms[r1].as_container = con;
+			ctx->registers.types[r1] = ctAtomType_Container;
+			ct_containers_incRef(ctx->containers, con);
+			break;
+			
+		case instrConDel:
+			r1 = instrs[ctx->ip++];
+			check_type(&ctx->registers, r1, ctAtomType_Container);
+			con = ctx->registers.atoms[r1].as_container;
+			ct_containers_delContainer(ctx->containers, con);
+			ctx->registers.types[r1] = ctAtomType_NoneType;
+			break;
+
+		case instrConGet:
+			r1 = instrs[ctx->ip++];
+			check_type(&ctx->registers, r1, ctAtomType_Container);
+			r2 = instrs[ctx->ip++];
+			check_type(&ctx->registers, r2, ctAtomType_UInt);
+			con = ctx->registers.atoms[r1].as_container;
+			typed = ct_containers_conGet(ctx->containers, con, ctx->registers.atoms[r2].as_uint);
+
+			ct_containers_decRef(ctx->containers, con);
+			ctx->registers.atoms[r1] = typed.atom;
+			ctx->registers.types[r1] = typed.type;
+			break;
+
+		case instrConSet:
+			r1 = instrs[ctx->ip++];
+			check_type(&ctx->registers, r1, ctAtomType_Container);
+			r2 = instrs[ctx->ip++];
+			check_type(&ctx->registers, r2, ctAtomType_UInt);
+			r3 = instrs[ctx->ip++];
+			typed = (ctTypedAtom){ctx->registers.types[r3], ctx->registers.atoms[r3]};
+			
+			con = ctx->registers.atoms[r1].as_container;
+			ct_containers_conSet(ctx->containers, con, ctx->registers.atoms[r2].as_uint, typed);
+			break;
+		case instrConClone:
+		case instrConExtend:
+		case instrConShrink:
 			break;
 
 		default:

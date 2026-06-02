@@ -1,6 +1,7 @@
 
 file(GLOB ENGINE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/engine/*.c")
 file(GLOB IMAGE_SRC "${CMAKE_CURRENT_SOURCE_DIR}/image/*.c")
+file(GLOB CONTAINER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/containers/*.c")
 
 add_library(
 	CuteEngine
@@ -8,6 +9,7 @@ add_library(
 
     ${ENGINE_SRC}
 	${IMAGE_SRC}
+	${CONTAINER_SRC}
 )
 
 target_compile_options(

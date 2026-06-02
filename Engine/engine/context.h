@@ -8,12 +8,14 @@
 #include "CuteAtom.h"
 #include "CuteConfig.h"
 #include "CuteInstr.h"
+#include "containers/container.h"
 #include "engine/failure.h"
 
+
 typedef struct {
+	uint64_t        size;
 	ctAtom*         atoms;
 	ctAtomTypeSize* types;
-	uint32_t        size;
 } ctAtomFile;
 
 
@@ -26,7 +28,7 @@ typedef struct {
 typedef struct {
 	uint64_t    procedure_id;
 	uint64_t    return_ip;
-	ctAtomFile* locals;
+	ctAtomFile  locals;
 } ctCallFrame;
 
 
@@ -44,6 +46,7 @@ typedef struct {
 
 typedef struct {
 	ctImage*       image;
+	ctContainerManager* containers;
 	uint64_t       ip;
 	ctRegisterFile registers;
 	ctCallStack    callstack;
@@ -51,12 +54,13 @@ typedef struct {
 	bool           running;
 	bool           has_failure;
 	ctFailure      failure;
+	uint32_t       return_code;
 } ctContext;
 
 
 // Create a new context. Requires the image to be ran and the starting procedure.
 ctContext*
-ct_ctx_new(ctImage* img, uint64_t procedure_id);
+ct_ctx_new(ctImage* img, ctContainerManager* containers, uint64_t procedure_id);
 
 // Free the context and its resources.
 void

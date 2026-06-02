@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,22 +13,24 @@
 #include "context.h"
 
 
-static ctAtomFile*
+static ctAtomFile
 ct_ctx_allocAtomFile(uint32_t count) {
-	ctAtomFile* file = malloc(
-		sizeof(ctAtom) * count + 
-		sizeof(ctAtomTypeSize) * count +
-		sizeof(uint32_t)
-	);
-	file->size = count;
+	if (count == 0) return (ctAtomFile){0, NULL, NULL};
+
+	ctAtomFile file;
+	file.size = count;
+	
+	ctAtom* memory = malloc(sizeof(ctAtom) * count + sizeof(ctAtomTypeSize) * count);
+	file.atoms = memory;
+	file.types = (ctAtomTypeSize*)(memory + count);
 	return file;
 }
 
 
 static void
 ct_ctx_freeAtomFile(ctAtomFile* file) {
-	if (file != NULL) {
-		free(file);
+	if (file->size != 0) {
+		free(file->atoms);
 	}
 }
 
@@ -43,7 +46,7 @@ static void
 ct_ctx_delStack(ctCallStack* s) {
 
 	for (uint32_t i = 0; i < s->size; i++) {
-		ct_ctx_freeAtomFile(s->frames[i].locals);
+		ct_ctx_freeAtomFile(&s->frames[i].locals);
 	};
 
     s->size    = 0;
@@ -70,9 +73,10 @@ ct_ctx_peekFrame(ctCallStack* s) {
 
 
 ctContext*
-ct_ctx_new(ctImage* img, uint64_t procedure_id) {
+ct_ctx_new(ctImage* img, ctContainerManager* containers, uint64_t procedure_id) {
 	ctContext* ctx = malloc(sizeof(ctContext));
 	ctx->image = img;
+	ctx->containers = containers;
 	ctx->running = true;
 	ctx->current_frame = NULL;
 	ctx->has_failure = false;
@@ -98,7 +102,14 @@ ct_ctx_callProcedure(ctContext* ctx, uint64_t procedure_id) {
 
 	ctCallFrame frame;
 	frame.procedure_id = procedure_id;
-	frame.locals = ct_ctx_allocAtomFile(ctx->image->procedure_table[procedure_id].locals_size);
+	uint32_t locals_count = ctx->image->procedure_table[procedure_id].locals_count;
+
+	if (locals_count > CUTE_CONF_LOCALS_LIMIT) {
+		ct_ctx_reportFailure(ctx, (ctFailure){"Too many locals allocated for procedure."});
+		return;
+	}
+
+	frame.locals = ct_ctx_allocAtomFile(locals_count);
 	frame.return_ip = ctx->ip;
 	ct_ctx_pushFrame(&ctx->callstack, frame);
 
@@ -112,7 +123,7 @@ void
 ct_ctx_returnProcedure(ctContext* ctx) {
 
 	ctCallFrame frame = ct_ctx_popFrame(&ctx->callstack);
-	ct_ctx_freeAtomFile(frame.locals);
+	ct_ctx_freeAtomFile(&frame.locals);
 
 	ctx->ip = frame.return_ip;
 	ctx->current_frame = ct_ctx_peekFrame(&ctx->callstack);

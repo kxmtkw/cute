@@ -30,6 +30,7 @@ static const std::map<std::string, InstrSpec> instrMap = {
 	{"loadu", {instrLoadU, {1, 4}}},
 	{"loadf", {instrLoadF, {1, 4}}},
 	{"loadb", {instrLoadB, {1, 4}}},
+	{"loadc", {instrLoadC, {1, 4}}},
 	{"addi", {instrAddI, {1, 1}}},
 	{"subi", {instrSubI, {1, 1}}},
 	{"muli", {instrMulI, {1, 1}}},
@@ -72,6 +73,10 @@ static const std::map<std::string, InstrSpec> instrMap = {
 	{"jmaifnot", {instrJmpAbsIfNot, {1, 1}}},
 	{"call", {instrCall, {4}}},
 	{"ret", {instrReturn, {}}},
+	{"connew", {instrConNew, {1}}},
+	{"condel", {instrConDel, {1}}},
+	{"conget", {instrConGet, {1, 1}}},
+	{"conset", {instrConSet, {1, 1, 1}}},
 };
 
 static std::string
@@ -350,7 +355,7 @@ writeImage(const std::string& path, const std::vector<uint8_t>& bytes, const std
 	for (size_t i = 0; i < procedures.size(); ++i) {
 		img.procedure_table[i].id = procedures[i].id;
 		img.procedure_table[i].bytecode_index = procedures[i].bytecode_index;
-		img.procedure_table[i].locals_size = procedures[i].locals_size;
+		img.procedure_table[i].locals_count = procedures[i].locals_size;
 	}
 
 	for (size_t i = 0; i < bytes.size(); ++i) {

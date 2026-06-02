@@ -17,6 +17,7 @@ typedef enum {
 	instrLoadU   = 0x22,
 	instrLoadF   = 0x23,
 	instrLoadB   = 0x24,
+	instrLoadC   = 0x25,
 
 	instrAddI    = 0x30,
 	instrSubI    = 0x31,
@@ -68,7 +69,15 @@ typedef enum {
 	instrJmpAbsIfNot     = 0xA5,
 
 	instrCall        = 0xB0,
-	instrReturn      = 0xB1
+	instrReturn      = 0xB1,
+
+	instrConNew     = 0xC1,
+	instrConDel     = 0xC2,
+	instrConGet     = 0xC3,
+	instrConSet     = 0xC4,
+	instrConClone   = 0xC5,
+	instrConExtend  = 0xC6,
+	instrConShrink  = 0xC7
 
 } ctInstruction;
 
@@ -79,21 +88,23 @@ static const uint32_t ctMagicId = 0x12345678;
 
 typedef struct {
 	uint32_t magic_id;
-	uint64_t procedure_count;
-	uint64_t instruction_count;
+	uint32_t procedure_count;
+	uint32_t instruction_count;
+	uint32_t procedure_table_offset;
+	uint32_t instruction_pool_offset; 
 } ctImageHeader;
 
 
 typedef struct {
-	uint64_t id;
-	uint64_t bytecode_index;
-	uint32_t locals_size;
+	uint32_t id;
+	uint32_t bytecode_index;
+	uint32_t locals_count;
 } ctImageProcedure;
 
 
 typedef struct {
-	ctImageHeader header;
-	ctImageProcedure* procedure_table;
+	ctImageHeader      header;
+	ctImageProcedure*  procedure_table;
 	ctInstructionSize* instruction_pool;
 } ctImage;
 
