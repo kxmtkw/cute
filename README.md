@@ -1,24 +1,47 @@
 ## Cute 
 
-**Cute** is a cute little programming language that I am working on.
+**Cute** is a cute little language runtime that I am working on.
 
-### Purpose
+### Features
 
-I'm designing `cute` to be as cute as possible. What I mean is that the user can program as easily as possible while having fun. To program without thinking much about the syntax or the language rules. To program with ton of fun features. To offer modularity, ease of use and performance without making programming seem like a chore.
+Cute is a typed virtual machine. Though I am still finalizing on the architecture.
 
-Read the changelog at [changelog](docs/changelog.md).
+Here is a basic program in the cute asm:
 
-### Building
-
-Though nothing works right now, you can install v0.0.1.
-
-Building `cute` is easy, you can just:
-```bash
-cmake -B build
-cd build
-make
 ```
 
+0 [
+	loadi r0 10  ; load an integar with value 10 to r0
+	loadi r1 5   ; load an integar with value 5 to r1 
+	addi r0 r1   ; add r0 and r1 and store the result back to r0
+	out r0 0     ; output the value of r0, the 0 is the format.
+	halt 0       ; halt the engine with code 0
+]
+
+; will print [ int 15 ]
+
+```
+
+Here is one with more than one procedures:
+
+```
+
+0 [
+	loadi r0 5
+	call 1
+	out r0 0 
+	halt 0
+]
+
+1 [
+	muli r0 r0
+	ret
+]
+
+; procedure(1) acts a square function in this example
+; will print out [ int 25 ]
+
+```
 
 
 
