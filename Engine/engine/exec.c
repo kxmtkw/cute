@@ -59,7 +59,6 @@ out(ctAtom atom, ctAtomTypeSize type, uint32_t fmt) {
 }
 
 
-
 static inline void
 check_type(ctRegisterFile* registers, uint index, ctAtomType expected_type) {
 	if (registers->types[index] != expected_type) {
@@ -115,6 +114,10 @@ check_type(&ctx->registers, r1, ctAtomType_Int); \
 ctx->ip = ctx->registers.atoms[r1].as_int; \
 if (ctx->ip >= ctx->image->header.instruction_count) {printf("Out of range ip\n"); exit(1);};
 
+#define CONTAINER_CHECKS(Index, Function) \
+if (ctx->registers.types[Index] == ctAtomType_Container) { \
+	Function(ctx->containers, ctx->registers.atoms[Index].as_container); \
+} 
 
 void
 ct_ctx_exec(ctContext* ctx) 
@@ -135,8 +138,9 @@ ct_ctx_exec(ctContext* ctx)
 	while(ctx->running)
 	{
 	ctInstruction instr = instrs[ctx->ip++];
-	printf("instruction 0x%x ip: %lu\n", instr, ctx->ip);
-
+	CUTE_LOG("trace", "ip: %08lu | Opcode: 0x%X | ctx: %p\n", ctx->ip-1, instr, ctx);
+	
+	
 		switch (instr) 
 		{
 
@@ -163,12 +167,14 @@ ct_ctx_exec(ctContext* ctx)
 			r2 = instrs[ctx->ip++];
 			ctx->registers.atoms[r1] = ctx->registers.atoms[r2];
 			ctx->registers.types[r1] = ctx->registers.types[r2];
+			CONTAINER_CHECKS(r2, ct_containers_incRef);
 			break;
 
 		case instrLoadI:
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
 			memcpy(&i, &u, sizeof(i)); 
+			CONTAINER_CHECKS(r1, ct_containers_decRef);
 			ctx->registers.atoms[r1].as_int = i;
 			ctx->registers.types[r1] = ctAtomType_Int;
 			break;
@@ -176,6 +182,7 @@ ct_ctx_exec(ctContext* ctx)
 		case instrLoadU:
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
+			CONTAINER_CHECKS(r1, ct_containers_decRef);
 			ctx->registers.atoms[r1].as_uint = u;
 			ctx->registers.types[r1] = ctAtomType_UInt;
 			break;
@@ -184,6 +191,7 @@ ct_ctx_exec(ctContext* ctx)
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
 			memcpy(&f, &u, sizeof(f)); 
+			CONTAINER_CHECKS(r1, ct_containers_decRef);
 			ctx->registers.atoms[r1].as_float= f;
 			ctx->registers.types[r1] = ctAtomType_Float;
 			break;
@@ -191,6 +199,7 @@ ct_ctx_exec(ctContext* ctx)
 		case instrLoadB:
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
+			CONTAINER_CHECKS(r1, ct_containers_decRef);
 			ctx->registers.atoms[r1].as_bool = u;
 			ctx->registers.types[r1] = ctAtomType_Bool;
 			break;
@@ -198,6 +207,7 @@ ct_ctx_exec(ctContext* ctx)
 		case instrLoadC:
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
+			CONTAINER_CHECKS(r1, ct_containers_decRef);
 			ctx->registers.atoms[r1].as_char = u;
 			ctx->registers.types[r1] = ctAtomType_Char;
 			break;
@@ -307,11 +317,11 @@ ct_ctx_exec(ctContext* ctx)
 			break;
 
 		case instrCmpU:
-			INSTR_CMP(ctAtomType_UInt, as_float);
+			INSTR_CMP(ctAtomType_UInt, as_uint);
 			break;
 
 		case instrCmpF:
-			INSTR_CMP(ctAtomType_Float, as_uint);
+			INSTR_CMP(ctAtomType_Float, as_float);
 			break;
 
 		case instrEq:
@@ -437,6 +447,7 @@ ct_ctx_exec(ctContext* ctx)
 			con = ctx->registers.atoms[r1].as_container;
 			ct_containers_conSet(ctx->containers, con, ctx->registers.atoms[r2].as_uint, typed);
 			break;
+
 		case instrConClone:
 		case instrConExtend:
 		case instrConShrink:

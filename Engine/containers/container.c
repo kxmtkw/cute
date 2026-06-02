@@ -68,7 +68,6 @@ ct_containers_end(ctContainerManager* manager) {
 		ct_containers_delContainer(manager, manager->containers[manager->container_count-1]);
 	}
 		
-	
 	manager->container_count = 0;
 }
 
@@ -96,6 +95,8 @@ ct_containers_newContainer(ctContainerManager* manager, uint32_t size) {
 	memset(con->types, ctAtomType_NoneType, size);
 	
 	ct_container_manager_pushToArray(manager, con);
+
+	CUTE_LOG("containers", "New container (%u) (%p) allocated.\n", con->id, con);
 	return con;
 }
 
@@ -103,23 +104,25 @@ ct_containers_newContainer(ctContainerManager* manager, uint32_t size) {
 void
 ct_containers_delContainer(ctContainerManager* manager, ctContainer* con) {
 	ct_containers_removeFromArray(manager, con);
+	CUTE_LOG("containers", "Container (%u) (%p) deallocated.\n", con->id, con);
 	free(con);
 }
 
 void
 ct_containers_incRef(ctContainerManager* manager, ctContainer* con) {
 	con->ref_count++;
+	CUTE_LOG("containers", "Container (%u) (%p) referenced. References: %u\n", con->id, con, con->ref_count);
 }
 
 void
 ct_containers_decRef(ctContainerManager* manager, ctContainer* con) {
 
+	con->ref_count--;
+	CUTE_LOG("containers", "Container (%u) (%p) dereferenced. References: %u\n", con->id, con, con->ref_count);
+
 	if (con->ref_count == 0) {
 		ct_containers_delContainer(manager, con);
-		return;
 	}
-
-	con->ref_count--;
 }
 
 ctTypedAtom

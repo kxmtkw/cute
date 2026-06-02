@@ -12,6 +12,7 @@
 
 void
 ct_engine_init(ctEngine* engine) {
+	CUTE_LOG("engine", "vroom vroom\n");
 	engine->ctx = NULL;
 	ct_containers_init(&engine->manager);
 }
@@ -27,6 +28,7 @@ ct_engine_end(ctEngine* engine) {
 // Load an image file. For now, only one image can be loaded.
 void
 ct_engine_loadFile(ctEngine* engine, const char* filepath) {
+	CUTE_LOG("engine", "Loading image file: %s\n", filepath);
 	ctImageCode code = ct_image_read(&engine->image, filepath);
 }
 
