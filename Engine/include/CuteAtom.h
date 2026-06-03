@@ -58,13 +58,13 @@ ct_atom_pack(ctAtom atom, ctAtomTypeSize type) {
 
 
 static const char* ct_atom_stringforms[] = {
-	"none",
-	"int",
-	"uint",
-	"float",
-	"bool",
-	"char",
-	"container"
+	[ctAtomType_NoneType]  = "none",
+	[ctAtomType_Int]       = "int",
+	[ctAtomType_UInt]      = "uint",
+	[ctAtomType_Float]     = "float",
+	[ctAtomType_Bool]      = "bool",
+	[ctAtomType_Char]      = "char",
+	[ctAtomType_Container] = "container"
 };
 
 #endif // CUTE_ATOM_H

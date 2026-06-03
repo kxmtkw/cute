@@ -9,7 +9,7 @@
 #include "CuteConfig.h"
 #include "CuteInstr.h"
 #include "containers/container.h"
-#include "engine/failure.h"
+#include "engine/error.h"
 
 
 typedef struct {
@@ -39,10 +39,6 @@ typedef struct {
 } ctCallStack;
 
 
-typedef struct {
-	char* msg;
-} ctFailure;
-
 
 typedef struct {
 	ctImage*       image;
@@ -52,8 +48,8 @@ typedef struct {
 	ctCallStack    callstack;
 	ctCallFrame*   current_frame;
 	bool           running;
-	bool           has_failure;
-	ctFailure      failure;
+	bool           has_error;
+	ctError        error;
 	uint32_t       return_code;
 } ctContext;
 
@@ -75,7 +71,7 @@ void
 ct_ctx_returnProcedure(ctContext* ctx);
 
 void
-ct_ctx_reportFailure(ctContext* ctx, ctFailure failure);
+ct_ctx_throwError(ctContext* ctx, ctError error);
 
 
 // Executes a context, the heart of the engine.

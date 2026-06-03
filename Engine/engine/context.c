@@ -8,7 +8,6 @@
 #include "CuteAtom.h"
 #include "CuteConfig.h"
 #include "CuteInstr.h"
-#include "engine/failure.h"
 
 #include "context.h"
 
@@ -79,7 +78,7 @@ ct_ctx_new(ctImage* img, ctContainerManager* containers, uint32_t procedure_id) 
 	ctx->containers = containers;
 	ctx->running = true;
 	ctx->current_frame = NULL;
-	ctx->has_failure = false;
+	ctx->has_error = false;
 	ct_ctx_initStack(&ctx->callstack);
 	ct_ctx_callProcedure(ctx, procedure_id);
 	return ctx;
@@ -96,7 +95,7 @@ void
 ct_ctx_callProcedure(ctContext* ctx, uint32_t procedure_id) {
 
 	if (ctx->callstack.size >= ctx->callstack.capacity) {
-		ct_ctx_reportFailure(ctx, (ctFailure){"Max recursion depth reached."});
+		ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_RecursionDepth, "Max recursion depth reached."));
 		return;
 	};
 
@@ -105,7 +104,7 @@ ct_ctx_callProcedure(ctContext* ctx, uint32_t procedure_id) {
 	uint32_t locals_count = ctx->image->procedure_table[procedure_id].locals_count;
 
 	if (locals_count > CUTE_CONF_LOCALS_LIMIT) {
-		ct_ctx_reportFailure(ctx, (ctFailure){"Too many locals allocated for procedure."});
+		ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_RecursionDepth, "Too many locals allocated for procedure."));
 		return;
 	}
 
@@ -132,9 +131,9 @@ ct_ctx_returnProcedure(ctContext* ctx) {
 }
 
 
-void 
-ct_ctx_reportFailure(ctContext* ctx, ctFailure failure) {
+void
+ct_ctx_throwError(ctContext* ctx, ctError error) {
 	ctx->running = false;
-	ctx->has_failure = true;
-	ctx->failure = failure;
+	ctx->has_error = true;
+	ctx->error = error;
 }

@@ -32,8 +32,5 @@ ct_engine_loadFile(ctEngine* engine, const char* filepath);
 void
 ct_engine_run(ctEngine* engine);
 
-//
-void
-ct_engine_reportFailure(ctFailure failure);
 
 #endif // CUTE_ENGINE_H

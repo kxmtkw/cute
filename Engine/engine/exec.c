@@ -11,6 +11,7 @@
 
 #include "containers/container.h"
 #include "context.h"
+#include "engine/error.h"
 
 
 static inline uint32_t
@@ -130,6 +131,18 @@ r1 = instrs[ctx->ip++]; \
 r2 = instrs[ctx->ip++]; \
 check_type(&ctx->registers, r1, Type); \
 check_type(&ctx->registers, r2, Type); \
+ctx->registers.atoms[r1].AtomField =  ctx->registers.atoms[r1].AtomField Operation ctx->registers.atoms[r2].AtomField;
+
+
+#define INSTR_BINARYOP_DIV(Type, AtomField, Operation) \
+r1 = instrs[ctx->ip++]; \
+r2 = instrs[ctx->ip++]; \
+check_type(&ctx->registers, r1, Type); \
+check_type(&ctx->registers, r2, Type); \
+if (ctx->registers.atoms[r2].AtomField == 0) { \
+	ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_ZeroDivision, "Tried to divide by zero.")); \
+	return; \
+} \
 ctx->registers.atoms[r1].AtomField =  ctx->registers.atoms[r1].AtomField Operation ctx->registers.atoms[r2].AtomField;
 
 
@@ -276,7 +289,7 @@ ct_ctx_exec(ctContext* ctx)
 			break;
 
 		case instrDivI:
-			INSTR_BINARYOP(ctAtomType_Int, as_int, /);
+			INSTR_BINARYOP_DIV(ctAtomType_Int, as_int, /);
 			break;
 
 		case instrModI:
@@ -300,7 +313,7 @@ ct_ctx_exec(ctContext* ctx)
 			break;
 
 		case instrDivU:
-			INSTR_BINARYOP(ctAtomType_UInt, as_uint, /);
+			INSTR_BINARYOP_DIV(ctAtomType_UInt, as_uint, /);
 			break;
 
 		case instrModU:
@@ -320,7 +333,7 @@ ct_ctx_exec(ctContext* ctx)
 			break;	
 
 		case instrDivF:
-			INSTR_BINARYOP(ctAtomType_Float, as_float, /);
+			INSTR_BINARYOP_DIV(ctAtomType_Float, as_float, /);
 			break;	
 
 		case instrNegF:
@@ -480,7 +493,7 @@ ct_ctx_exec(ctContext* ctx)
 			r2 = instrs[ctx->ip++];
 			check_type(&ctx->registers, r2, ctAtomType_UInt);
 			con = ctx->registers.atoms[r1].as_container;
-			
+
 			ct_containers_conGet(ctx->containers, con, ctx->registers.atoms[r2].as_uint, &typed);
 
 			ct_containers_decRef(ctx->containers, con);
@@ -506,7 +519,7 @@ ct_ctx_exec(ctContext* ctx)
 			break;
 
 		default:
-			ct_ctx_reportFailure(ctx, (ctFailure){"Illegal Instruction."});
+			ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_IllegalInstruction, "illegal instruction executed. halting engine."));
 		}
 	}
 

@@ -38,13 +38,7 @@ ct_engine_run(ctEngine* engine) {
 	engine->ctx = ct_ctx_new(&engine->image, &engine->manager, 0);
 	ct_ctx_exec(engine->ctx);
 	
-	if (engine->ctx->has_failure) {
-		ct_engine_reportFailure(engine->ctx->failure);
+	if (engine->ctx->has_error) {
+		ct_error_print(engine->ctx->error);
 	}
-}
-
-
-void
-ct_engine_reportFailure(ctFailure failure) {
-	printf("[Cute Engine Failure]\n%s\n", failure.msg);
 }
