@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +13,6 @@
 #include "context.h"
 
 
-
 static inline uint32_t
 load32(ctInstructionSize* instrs, uint64_t* ip) {
 	uint32_t u;
@@ -20,7 +20,6 @@ load32(ctInstructionSize* instrs, uint64_t* ip) {
 	*ip += 4;
 	return u;
 }
-
 
 static inline void 
 out(ctAtom atom, ctAtomTypeSize type, uint32_t fmt) {
@@ -70,6 +69,60 @@ check_type(ctRegisterFile* registers, uint index, ctAtomType expected_type) {
 		exit(1);
 	};
 }
+
+
+static inline void
+write_atom(ctContext* ctx, uint i, ctAtom atom, ctAtomTypeSize type) {
+
+	ctRegisterFile* registers = &ctx->registers;
+	ctAtomFile* atomfile = &ctx->current_frame->locals;
+
+	if (type == ctAtomType_Container) {
+		ct_containers_incRef(ctx->containers, atom.as_container);
+	}
+
+	if (i < CUTE_CONF_REGISTER_COUNT) {
+		if (registers->types[i] == ctAtomType_Container) {
+			ct_containers_decRef(ctx->containers, registers->atoms[i].as_container);
+		}
+		registers->atoms[i] = atom;
+		registers->types[i] = type;
+		return;
+	}
+	
+	i = i - CUTE_CONF_REGISTER_COUNT;
+
+	if (i < atomfile->size) {
+		if (atomfile->types[i] == ctAtomType_Container) {
+			ct_containers_decRef(ctx->containers, atomfile->atoms[i].as_container);
+		}
+
+		atomfile->atoms[i] = atom;
+		atomfile->types[i] = type;
+	}
+}
+
+
+static inline void
+read_atom(ctContext* ctx, uint i, ctAtom* atom, ctAtomTypeSize* type) {
+
+	ctRegisterFile* registers = &ctx->registers;
+	ctAtomFile* atomfile = &ctx->current_frame->locals;
+
+	if (i < CUTE_CONF_REGISTER_COUNT) {
+		*atom = registers->atoms[i];
+		*type = registers->types[i];
+		return;
+	}
+
+	i = i - CUTE_CONF_REGISTER_COUNT;
+
+	if (i < atomfile->size) {
+		*atom = atomfile->atoms[i];
+		*type = atomfile->types[i];
+	}
+}
+
 
 
 #define INSTR_BINARYOP(Type, AtomField, Operation) \
@@ -145,7 +198,6 @@ ct_ctx_exec(ctContext* ctx)
 		{
 
 		case instrHalt:
-			ctx->return_code = instrs[ctx->ip++];
 			return;
 
 		case instrNull:
@@ -165,51 +217,50 @@ ct_ctx_exec(ctContext* ctx)
 		case instrMov:
 			r1 = instrs[ctx->ip++];
 			r2 = instrs[ctx->ip++];
-			ctx->registers.atoms[r1] = ctx->registers.atoms[r2];
-			ctx->registers.types[r1] = ctx->registers.types[r2];
-			CONTAINER_CHECKS(r2, ct_containers_incRef);
+			read_atom(ctx, r2, &typed.atom, &typed.type);
+			write_atom(ctx, r1, typed.atom, typed.type);
 			break;
 
 		case instrLoadI:
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
-			memcpy(&i, &u, sizeof(i)); 
-			CONTAINER_CHECKS(r1, ct_containers_decRef);
-			ctx->registers.atoms[r1].as_int = i;
-			ctx->registers.types[r1] = ctAtomType_Int;
+			memcpy(&i, &u, sizeof(i));
+			typed.atom.as_int = i;
+			typed.type = ctAtomType_Int;
+			write_atom(ctx, r1, typed.atom, typed.type);
 			break;
 
 		case instrLoadU:
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
-			CONTAINER_CHECKS(r1, ct_containers_decRef);
-			ctx->registers.atoms[r1].as_uint = u;
-			ctx->registers.types[r1] = ctAtomType_UInt;
+			typed.atom.as_uint = u;
+			typed.type = ctAtomType_UInt;
+			write_atom(ctx, r1, typed.atom, typed.type);
 			break;
 
 		case instrLoadF:
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
-			memcpy(&f, &u, sizeof(f)); 
-			CONTAINER_CHECKS(r1, ct_containers_decRef);
-			ctx->registers.atoms[r1].as_float= f;
-			ctx->registers.types[r1] = ctAtomType_Float;
+			memcpy(&f, &u, sizeof(f));
+			typed.atom.as_float = f;
+			typed.type = ctAtomType_Float;
+			write_atom(ctx, r1, typed.atom, typed.type);
 			break;
 
 		case instrLoadB:
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
-			CONTAINER_CHECKS(r1, ct_containers_decRef);
-			ctx->registers.atoms[r1].as_bool = u;
-			ctx->registers.types[r1] = ctAtomType_Bool;
+			typed.atom.as_bool = u;
+			typed.type = ctAtomType_Bool;
+			write_atom(ctx, r1, typed.atom, typed.type);
 			break;
 
 		case instrLoadC:
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
-			CONTAINER_CHECKS(r1, ct_containers_decRef);
-			ctx->registers.atoms[r1].as_char = u;
-			ctx->registers.types[r1] = ctAtomType_Char;
+			typed.atom.as_char = u;
+			typed.type = ctAtomType_Char;
+			write_atom(ctx, r1, typed.atom, typed.type);
 			break;
 
 		case instrAddI:

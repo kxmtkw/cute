@@ -60,7 +60,7 @@ typedef struct {
 
 // Create a new context. Requires the image to be ran and the starting procedure.
 ctContext*
-ct_ctx_new(ctImage* img, ctContainerManager* containers, uint64_t procedure_id);
+ct_ctx_new(ctImage* img, ctContainerManager* containers, uint32_t procedure_id);
 
 // Free the context and its resources.
 void
@@ -68,7 +68,7 @@ ct_ctx_del(ctContext* ctx);
 
 // Setup a callframe and allocated local variables for a procedure.
 void
-ct_ctx_callProcedure(ctContext* ctx, uint64_t procedure_id);
+ct_ctx_callProcedure(ctContext* ctx, uint32_t procedure_id);
 
 // Return from the last called procedure.
 void

@@ -13,6 +13,7 @@
 
 extern "C" {
 #include "CuteInstr.h"
+#include "CuteConfig.h"
 }
 
 struct InstrSpec {
@@ -128,9 +129,32 @@ appendU32(std::vector<uint8_t>& out, uint32_t value)
 }
 
 static uint8_t
-parseRegisterOrByte(const std::string& token)
+parseRegisterOrByte(const std::string& token, uint32_t& maxLocalUsed)
 {
 	std::string text = token;
+
+	// Handle local variables: s0, s1, s2, ...
+	if (!text.empty() && (text[0] == 's' || text[0] == 'S')) {
+		text.erase(text.begin());
+		unsigned long localIndex = 0;
+		try {
+			localIndex = std::stoul(text, nullptr, 0);
+		} catch (const std::exception&) {
+			throw std::runtime_error("invalid local variable: " + token);
+		}
+
+		if (localIndex >= CUTE_CONF_LOCALS_LIMIT) {
+			throw std::runtime_error("local index out of range (max " + std::to_string(CUTE_CONF_LOCALS_LIMIT - 1) + "): " + token);
+		}
+
+		if (localIndex > maxLocalUsed) {
+			maxLocalUsed = localIndex;
+		}
+
+		return static_cast<uint8_t>(CUTE_CONF_REGISTER_COUNT + localIndex);
+	}
+
+	// Handle registers: r0, r1, ..., or bare numbers
 	if (!text.empty() && (text[0] == 'r' || text[0] == 'R')) {
 		text.erase(text.begin());
 	}
@@ -223,6 +247,8 @@ assemble(const std::vector<std::string>& tokens, std::vector<Procedure>& procedu
 			proc.bytecode_index = bytecode.size();
 			proc.locals_size = 0;
 
+			uint32_t maxLocalUsed = 0;
+
 			procedures.push_back(proc);
 			procedureIds[procId] = true;
 
@@ -249,7 +275,7 @@ assemble(const std::vector<std::string>& tokens, std::vector<Procedure>& procedu
 					const size_t argLength = specInner.arg_lengths[argIndex];
 
 					if (argLength == 1) {
-						appendU8(bytecode, parseRegisterOrByte(arg));
+						appendU8(bytecode, parseRegisterOrByte(arg, maxLocalUsed));
 						continue;
 					}
 
@@ -266,12 +292,15 @@ assemble(const std::vector<std::string>& tokens, std::vector<Procedure>& procedu
 				}
 			}
 
+			// set locals_size based on highest local used
+			procedures.back().locals_size = maxLocalUsed + 1;
+
 			// advance i past the entire procedure block (name [ ... ])
 			i = p + 1;
 			continue;
 		}
 
-		// Otherwise, parse as instruction
+		// Otherwise, parse as instruction (top-level instructions shouldn't use locals)
 		const auto specIt = instrMap.find(token);
 		if (specIt == instrMap.end()) {
 			throw std::runtime_error("unknown instruction: " + token);
@@ -282,6 +311,7 @@ assemble(const std::vector<std::string>& tokens, std::vector<Procedure>& procedu
 
 		++i;
 
+		uint32_t dummyMaxLocal = 0;
 		for (size_t argIndex = 0; argIndex < spec.arg_lengths.size(); ++argIndex) {
 			if (i >= tokens.size()) {
 				throw std::runtime_error("missing argument for instruction: " + token);
@@ -291,7 +321,7 @@ assemble(const std::vector<std::string>& tokens, std::vector<Procedure>& procedu
 			const size_t argLength = spec.arg_lengths[argIndex];
 
 			if (argLength == 1) {
-				appendU8(bytecode, parseRegisterOrByte(arg));
+				appendU8(bytecode, parseRegisterOrByte(arg, dummyMaxLocal));
 				continue;
 			}
 

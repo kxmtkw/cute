@@ -20,9 +20,9 @@ ct_ctx_allocAtomFile(uint32_t count) {
 	ctAtomFile file;
 	file.size = count;
 	
-	ctAtom* memory = malloc(sizeof(ctAtom) * count + sizeof(ctAtomTypeSize) * count);
-	file.atoms = memory;
-	file.types = (ctAtomTypeSize*)(memory + count);
+	uint8_t* memory = malloc(sizeof(ctAtom) * count + sizeof(ctAtomTypeSize) * count);
+	file.atoms = (ctAtom*)memory;
+	file.types = (ctAtomTypeSize*)(memory + sizeof(ctAtom) * count);
 	return file;
 }
 
@@ -73,7 +73,7 @@ ct_ctx_peekFrame(ctCallStack* s) {
 
 
 ctContext*
-ct_ctx_new(ctImage* img, ctContainerManager* containers, uint64_t procedure_id) {
+ct_ctx_new(ctImage* img, ctContainerManager* containers, uint32_t procedure_id) {
 	ctContext* ctx = malloc(sizeof(ctContext));
 	ctx->image = img;
 	ctx->containers = containers;
@@ -93,7 +93,7 @@ ct_ctx_del(ctContext* ctx) {
 
 
 void
-ct_ctx_callProcedure(ctContext* ctx, uint64_t procedure_id) {
+ct_ctx_callProcedure(ctContext* ctx, uint32_t procedure_id) {
 
 	if (ctx->callstack.size >= ctx->callstack.capacity) {
 		ct_ctx_reportFailure(ctx, (ctFailure){"Max recursion depth reached."});
@@ -115,7 +115,9 @@ ct_ctx_callProcedure(ctContext* ctx, uint64_t procedure_id) {
 
 
 	ctx->ip = ctx->image->procedure_table[procedure_id].bytecode_index;
-	ctx->current_frame = ct_ctx_peekFrame(&ctx->callstack);	
+	ctx->current_frame = ct_ctx_peekFrame(&ctx->callstack);
+
+	CUTE_LOG("context", "Called procedure(%u) with locals(%u)\n", procedure_id, locals_count);
 }
 
 
