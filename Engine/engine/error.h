@@ -15,6 +15,7 @@ typedef enum {
 	ctErrorCode_IllegalInstruction = 0x01,
 	ctErrorCode_EngineFailure      = 0x02,
 	ctErrorCode_OutOfBounds        = 0x03,
+	ctErrorCode_ProcedureError     = 0x04,
 
 	ctErrorCode_TypeError          = 0x10,
 	ctErrorCode_ValueError         = 0x11,
@@ -35,6 +36,7 @@ static const char* ct_error_stringforms[] = {
 	[ctErrorCode_IllegalInstruction] = "IllegalInstruction",
 	[ctErrorCode_EngineFailure]      = "EngineFailure",
 	[ctErrorCode_OutOfBounds]        = "OutOfBoundsError",
+	[ctErrorCode_ProcedureError]     = "ProcedureError",
 
 	[ctErrorCode_TypeError]          = "TypeError",
 	[ctErrorCode_ValueError]         = "ValueError",
