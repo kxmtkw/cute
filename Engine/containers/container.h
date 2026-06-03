@@ -17,6 +17,12 @@ typedef struct {
 } ctContainerManager;
 
 
+typedef enum {
+	ctConManagerCode_Success = 0,
+	ctConManagerCode_OutOfBounds = 1,
+	ctConManagerCode_UnknownError = 2
+} ctConManagerCode;
+
 void
 ct_containers_init(ctContainerManager* manager);
 
@@ -35,10 +41,13 @@ ct_containers_incRef(ctContainerManager* manager, ctContainer* container);
 inline void
 ct_containers_decRef(ctContainerManager* manager, ctContainer* container);
 
-ctTypedAtom
-ct_containers_conGet(ctContainerManager* manager, ctContainer* container, uint32_t index);
 
-void
+// Get an atom in the container. Will return ctConManagerCode_OutOfBounds if index is out of bounds
+ctConManagerCode
+ct_containers_conGet(ctContainerManager* manager, ctContainer* container, uint32_t index, ctTypedAtom* out_atom);
+
+// Set an atom in the container. Will return ctConManagerCode_OutOfBounds if index is out of bounds.
+ctConManagerCode
 ct_containers_conSet(ctContainerManager* manager, ctContainer* container, uint32_t index, ctTypedAtom atom);
 
 #endif // CONTAINERS_CONTAINER_H

@@ -125,24 +125,24 @@ ct_containers_decRef(ctContainerManager* manager, ctContainer* con) {
 	}
 }
 
-ctTypedAtom
-ct_containers_conGet(ctContainerManager* manager, ctContainer* con, uint32_t index) {
+ctConManagerCode
+ct_containers_conGet(ctContainerManager* manager, ctContainer* con, uint32_t index, ctTypedAtom* out_atom) {
 
 	if (index >= con->size) {
-		printf("OutOfBounds\n");
-		exit(1);
+		return ctConManagerCode_OutOfBounds;
 	}
 
-	return ct_atom_pack(con->atoms[index], con->types[index]);
+	*out_atom = (ctTypedAtom){con->types[index], con->atoms[index]};
+	return ctConManagerCode_Success;
 }
 
-void
+ctConManagerCode
 ct_containers_conSet(ctContainerManager* manager, ctContainer* con, uint32_t index, ctTypedAtom atom) {
 	if (index >= con->size) {
-		printf("OutOfBounds\n");
-		exit(1);
+		return ctConManagerCode_OutOfBounds;
 	}
 
 	con->atoms[index] = atom.atom;
 	con->types[index] = atom.type;
+	return ctConManagerCode_Success;
 }

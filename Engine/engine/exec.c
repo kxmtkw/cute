@@ -480,7 +480,8 @@ ct_ctx_exec(ctContext* ctx)
 			r2 = instrs[ctx->ip++];
 			check_type(&ctx->registers, r2, ctAtomType_UInt);
 			con = ctx->registers.atoms[r1].as_container;
-			typed = ct_containers_conGet(ctx->containers, con, ctx->registers.atoms[r2].as_uint);
+			
+			ct_containers_conGet(ctx->containers, con, ctx->registers.atoms[r2].as_uint, &typed);
 
 			ct_containers_decRef(ctx->containers, con);
 			ctx->registers.atoms[r1] = typed.atom;
