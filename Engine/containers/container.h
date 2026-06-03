@@ -8,6 +8,7 @@
 #include "CuteAtom.h"
 #include "CuteConfig.h"
 #include "CuteInstr.h"
+#include "engine/error.h"
 
 
 typedef struct {
@@ -16,12 +17,6 @@ typedef struct {
 	ctContainer*  containers[10];
 } ctContainerManager;
 
-
-typedef enum {
-	ctConManagerCode_Success = 0,
-	ctConManagerCode_OutOfBounds = 1,
-	ctConManagerCode_UnknownError = 2
-} ctConManagerCode;
 
 void
 ct_containers_init(ctContainerManager* manager);
@@ -43,11 +38,21 @@ ct_containers_decRef(ctContainerManager* manager, ctContainer* container);
 
 
 // Get an atom in the container. Will return ctConManagerCode_OutOfBounds if index is out of bounds
-ctConManagerCode
-ct_containers_conGet(ctContainerManager* manager, ctContainer* container, uint32_t index, ctTypedAtom* out_atom);
+ctTypedAtom
+ct_containers_conGet(ctContainerManager* manager, ctContainer* container, uint32_t index, ctError* error);
 
 // Set an atom in the container. Will return ctConManagerCode_OutOfBounds if index is out of bounds.
-ctConManagerCode
-ct_containers_conSet(ctContainerManager* manager, ctContainer* container, uint32_t index, ctTypedAtom atom);
+void
+ct_containers_conSet(ctContainerManager* manager, ctContainer* container, uint32_t index, ctTypedAtom atom, ctError* error);
+
+
+// Makes a clone of the container with the same atoms and types but different id
+ctContainer*
+ct_containers_conClone(ctContainerManager* manager, ctContainer* src, ctError* error);
+
+
+// Resize the container
+void
+ct_containers_conResize(ctContainerManager* manager, ctContainer* con, uint32_t new_size, ctError* error);
 
 #endif // CONTAINERS_CONTAINER_H

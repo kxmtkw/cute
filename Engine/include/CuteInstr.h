@@ -76,8 +76,8 @@ typedef enum {
 	instrConGet     = 0xC3,
 	instrConSet     = 0xC4,
 	instrConClone   = 0xC5,
-	instrConExtend  = 0xC6,
-	instrConShrink  = 0xC7
+	instrConResize  = 0xC6,
+	instrConLen     = 0xC7
 
 } ctInstruction;
 

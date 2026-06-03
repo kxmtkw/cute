@@ -75,17 +75,15 @@ ct_containers_end(ctContainerManager* manager) {
 ctContainer*
 ct_containers_newContainer(ctContainerManager* manager, uint32_t size) {
 
-	ctContainer* con;
+	ctContainer* con = malloc(sizeof(ctContainer));
 
 	uint8_t* ptr = malloc(
-		sizeof(ctContainer) +
 		sizeof(ctAtom) * size +
 		sizeof(ctAtomTypeSize) * size
 	);
 
-	con = (ctContainer*) ptr;
-	con->atoms = (ctAtom*) (ptr + sizeof(ctContainer));
-	con->types = (ctAtomTypeSize*) (ptr + sizeof(ctContainer) + sizeof(ctAtom)*size);
+	con->atoms = (ctAtom*) (ptr);
+	con->types = (ctAtomTypeSize*) (ptr + sizeof(ctAtom) * size);
 
 
 	con->id = manager->internal_id;
@@ -125,24 +123,72 @@ ct_containers_decRef(ctContainerManager* manager, ctContainer* con) {
 	}
 }
 
-ctConManagerCode
-ct_containers_conGet(ctContainerManager* manager, ctContainer* con, uint32_t index, ctTypedAtom* out_atom) {
+ctTypedAtom
+ct_containers_conGet(ctContainerManager* manager, ctContainer* con, uint32_t index, ctError* error) {
 
 	if (index >= con->size) {
-		return ctConManagerCode_OutOfBounds;
+		if (error) {
+			*error = ct_error_make(ctErrorCode_OutOfBounds, "Can not get atom at invalid container index.");
+		}
+		return (ctTypedAtom){ctAtomType_NoneType, (ctAtom){0}};
 	}
 
-	*out_atom = (ctTypedAtom){con->types[index], con->atoms[index]};
-	return ctConManagerCode_Success;
+	return (ctTypedAtom){con->types[index], con->atoms[index]};
 }
 
-ctConManagerCode
-ct_containers_conSet(ctContainerManager* manager, ctContainer* con, uint32_t index, ctTypedAtom atom) {
+
+void
+ct_containers_conSet(ctContainerManager* manager, ctContainer* con, uint32_t index, ctTypedAtom atom, ctError* error) {
 	if (index >= con->size) {
-		return ctConManagerCode_OutOfBounds;
+		if (error) {
+			*error = ct_error_make(ctErrorCode_OutOfBounds, "Can not set atom at invalid container index.");
+		}
+		return;
 	}
 
 	con->atoms[index] = atom.atom;
 	con->types[index] = atom.type;
-	return ctConManagerCode_Success;
+}
+
+
+ctContainer*
+ct_containers_conClone(ctContainerManager* manager, ctContainer* src, ctError* error) {
+	
+	ctContainer* clone = ct_containers_newContainer(manager, src->size);
+
+	memcpy(clone->atoms, src->atoms, src->size * sizeof(ctAtom));
+	memcpy(clone->types, src->types, src->size * sizeof(ctAtomTypeSize));
+	
+	return clone;
+}
+
+
+// Resize the container
+void
+ct_containers_conResize(ctContainerManager* manager, ctContainer* con, uint32_t new_size, ctError* error) {
+
+	if (con->size == new_size) {
+		return;
+	}
+	
+	ctContainer temp;
+	temp.size = con->size; // for logging later
+
+	uint8_t* ptr = malloc(
+		sizeof(ctAtom) * new_size +
+		sizeof(ctAtomTypeSize) * new_size
+	);
+	temp.atoms = (ctAtom*) (ptr);
+	temp.types = (ctAtomTypeSize*) (ptr + sizeof(ctAtom) * new_size);
+
+	memcpy(temp.atoms, con->atoms, con->size * sizeof(ctAtom));
+	memcpy(temp.types, con->types, con->size * sizeof(ctAtomTypeSize));
+
+	free(con->atoms);
+
+	con->atoms = temp.atoms;
+	con->types = temp.types;
+	con->size = new_size;
+
+	CUTE_LOG("containers", "Resized container(%u) [%p] from %u to %u\n", con->id, con, temp.size, new_size);
 }

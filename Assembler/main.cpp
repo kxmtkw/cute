@@ -78,6 +78,9 @@ static const std::map<std::string, InstrSpec> instrMap = {
 	{"condel", {instrConDel, {1}}},
 	{"conget", {instrConGet, {1, 1}}},
 	{"conset", {instrConSet, {1, 1, 1}}},
+	{"conclone", {instrConClone, {1}}},
+	{"conresize", {instrConResize, {1, 1}}},
+	{"conlen", {instrConLen, {1}}}
 };
 
 static std::string

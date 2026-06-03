@@ -204,7 +204,7 @@ ct_ctx_exec(ctContext* ctx)
 	while(ctx->running)
 	{
 	ctInstruction instr = instrs[ctx->ip++];
-	CUTE_LOG("trace", "ip: %08lu | Opcode: 0x%X | ctx: %p\n", ctx->ip-1, instr, ctx);
+	CUTE_LOG("trace", "ip: %08lu | instr: 0x%02X | ctx: %p\n", ctx->ip-1, instr, ctx);
 	
 	
 		switch (instr) 
@@ -224,7 +224,7 @@ ct_ctx_exec(ctContext* ctx)
 
 		case instrTypeOf:
 			r1 = instrs[ctx->ip++];
-			printf("%s\n", ct_atom_stringforms[ctx->registers.types[r1]]);
+			printf("[typeof] r%lu: %s\n", r1, ct_atom_stringforms[ctx->registers.types[r1]]);
 			break;
 
 		case instrMov:
@@ -494,7 +494,12 @@ ct_ctx_exec(ctContext* ctx)
 			check_type(&ctx->registers, r2, ctAtomType_UInt);
 			con = ctx->registers.atoms[r1].as_container;
 
-			ct_containers_conGet(ctx->containers, con, ctx->registers.atoms[r2].as_uint, &typed);
+			typed = ct_containers_conGet(ctx->containers, con, ctx->registers.atoms[r2].as_uint, &ctx->error);
+
+			if (ctx->error.code != ctErrorCode_None) {
+				ct_ctx_throwError(ctx, ctx->error);
+				return;
+			}
 
 			ct_containers_decRef(ctx->containers, con);
 			ctx->registers.atoms[r1] = typed.atom;
@@ -510,12 +515,39 @@ ct_ctx_exec(ctContext* ctx)
 			typed = (ctTypedAtom){ctx->registers.types[r3], ctx->registers.atoms[r3]};
 			
 			con = ctx->registers.atoms[r1].as_container;
-			ct_containers_conSet(ctx->containers, con, ctx->registers.atoms[r2].as_uint, typed);
+			ct_containers_conSet(ctx->containers, con, ctx->registers.atoms[r2].as_uint, typed, &ctx->error);
+
+			if (ctx->error.code != ctErrorCode_None) {
+				ct_ctx_throwError(ctx, ctx->error);
+				return;
+			}
+
 			break;
 
 		case instrConClone:
-		case instrConExtend:
-		case instrConShrink:
+			r1 = instrs[ctx->ip++];
+			check_type(&ctx->registers, r1, ctAtomType_Container);
+			con = ct_containers_conClone(
+				ctx->containers, ctx->registers.atoms[r1].as_container, &ctx->error
+			);
+			ctx->registers.atoms[r1].as_container = con;
+			ct_containers_incRef(ctx->containers, con);
+			break;
+
+		case instrConResize:
+			r1 = instrs[ctx->ip++];
+			check_type(&ctx->registers, r1, ctAtomType_Container);
+			r2 = instrs[ctx->ip++];
+			check_type(&ctx->registers, r2, ctAtomType_UInt);
+			ct_containers_conResize(ctx->containers, ctx->registers.atoms[r1].as_container, ctx->registers.atoms[r2].as_uint, &ctx->error);
+			break;
+
+		case instrConLen:
+			r1 = instrs[ctx->ip++];
+			check_type(&ctx->registers, r1, ctAtomType_Container);
+			con = ctx->registers.atoms[r1].as_container;
+			ctx->registers.atoms[r1].as_uint = con->size;
+			ctx->registers.types[r1] = ctAtomType_UInt;
 			break;
 
 		default:

@@ -23,6 +23,8 @@ ct_engine_end(ctEngine* engine) {
 	ct_ctx_del(engine->ctx);
 	ct_containers_end(&engine->manager);
 	ct_image_free(&engine->image);
+
+	CUTE_LOG("engine", "Ending engine.\n");
 }
 
 // Load an image file. For now, only one image can be loaded.
