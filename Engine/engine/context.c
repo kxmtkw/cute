@@ -176,6 +176,10 @@ ct_ctx_storeAtom(ctContext* ctx, uint32_t i, ctTypedAtom typed) {
 
 	frame->locals.atoms[i] = typed.atom;
 	frame->locals.types[i] = typed.type;
+
+	if (frame->locals.types[i] == ctAtomType_Container) {
+		ct_containers_incRef(ctx->containers, frame->locals.atoms[i].as_container);
+	}
 }
 
 

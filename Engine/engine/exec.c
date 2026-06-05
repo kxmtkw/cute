@@ -65,6 +65,11 @@ if (ctx->registers.types[Index] == ctAtomType_Container) { \
 	ct_containers_decRef(ctx->containers, ctx->registers.atoms[Index].as_container); \
 } 
 
+#define INC_IF_CONTAINER(Index) \
+if (ctx->registers.types[Index] == ctAtomType_Container) { \
+	ct_containers_incRef(ctx->containers, ctx->registers.atoms[Index].as_container); \
+} 
+
 // todo: checking destination type to ensure it isn't a container
 
 #define INSTR_BINARYOP(Type, AtomField, Operation) \
@@ -181,6 +186,7 @@ ct_ctx_exec(ctContext* ctx)
 			DEC_IF_CONTAINER(r1);
 			ctx->registers.atoms[r1] = ctx->registers.atoms[r2];
 			ctx->registers.types[r1] = ctx->registers.types[r2];
+			INC_IF_CONTAINER(r1);
 			break;
 
 		// add proper load/store
@@ -191,6 +197,7 @@ ct_ctx_exec(ctContext* ctx)
 			DEC_IF_CONTAINER(r1);
 			ctx->registers.atoms[r1] = typed.atom;
 			ctx->registers.types[r1] = typed.type;
+			INC_IF_CONTAINER(r1);
 			break;
 
 		case instrStore:
