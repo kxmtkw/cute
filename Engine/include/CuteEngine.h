@@ -13,6 +13,7 @@ typedef struct {
 	ctImage            image;
 	ctContainerManager manager;
 	ctContext*         ctx;
+	uint8_t            exit_code;
 } ctEngine;
 
 

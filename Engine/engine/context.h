@@ -50,7 +50,7 @@ typedef struct {
 	bool           running;
 	bool           has_error;
 	ctError        error;
-	uint32_t       return_code;
+	uint8_t        exit_code;
 } ctContext;
 
 

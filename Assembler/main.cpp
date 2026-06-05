@@ -24,42 +24,41 @@ struct InstrSpec {
 static const std::map<std::string, InstrSpec> instrMap = {
 	{"halt", {instrHalt, {1}}},
 	{"null", {instrNull, {}}},
-	{"out", {instrOut, {1, 1}}},
-	{"typeof", {instrTypeOf, {1}}},
+	{"out", {instrOut, {1}}},
 	{"mov", {instrMov, {1, 1}}},
-	{"loadi", {instrLoadI, {1, 4}}},
-	{"loadu", {instrLoadU, {1, 4}}},
-	{"loadf", {instrLoadF, {1, 4}}},
-	{"loadb", {instrLoadB, {1, 4}}},
-	{"loadc", {instrLoadC, {1, 4}}},
-	{"addi", {instrAddI, {1, 1}}},
-	{"subi", {instrSubI, {1, 1}}},
-	{"muli", {instrMulI, {1, 1}}},
-	{"divi", {instrDivI, {1, 1}}},
-	{"modi", {instrModI, {1, 1}}},
-	{"negi", {instrNegI, {1}}},
-	{"addu", {instrAddU, {1, 1}}},
-	{"subu", {instrSubU, {1, 1}}},
-	{"mulu", {instrMulU, {1, 1}}},
-	{"divu", {instrDivU, {1, 1}}},
-	{"modu", {instrModU, {1, 1}}},
-	{"addf", {instrAddF, {1, 1}}},
-	{"subf", {instrSubF, {1, 1}}},
-	{"mulf", {instrMulF, {1, 1}}},
-	{"divf", {instrDivF, {1, 1}}},
-	{"negf", {instrNegF, {1}}},
-	{"and", {instrLogicAnd, {1, 1}}},
-	{"or", {instrLogicOr, {1, 1}}},
-	{"not", {instrLogicNot, {1}}},
-	{"band", {instrBitAnd, {1, 1}}},
-	{"bor", {instrBitOr, {1, 1}}},
-	{"bxor", {instrBitXor, {1, 1}}},
-	{"bnot", {instrBitNot, {1,}}},
-	{"bshl", {instrBitShl, {1, 1}}},
-	{"bshr", {instrBitShr, {1, 1}}},
-	{"cmpi", {instrCmpI, {1, 1}}},
-	{"cmpu", {instrCmpU, {1, 1}}},
-	{"cmpf", {instrCmpF, {1, 1}}},
+	{"seti", {instrSetI, {1, 4}}},
+	{"setu", {instrSetU, {1, 4}}},
+	{"setf", {instrSetF, {1, 4}}},
+	{"setb", {instrSetB, {1, 4}}},
+	{"setc", {instrSetC, {1, 4}}},
+	{"addi", {instrAddI, {1, 1, 1}}},
+	{"subi", {instrSubI, {1, 1, 1}}},
+	{"muli", {instrMulI, {1, 1, 1}}},
+	{"divi", {instrDivI, {1, 1, 1}}},
+	{"modi", {instrModI, {1, 1, 1}}},
+	{"negi", {instrNegI, {1, 1}}},
+	{"addu", {instrAddU, {1, 1, 1}}},
+	{"subu", {instrSubU, {1, 1, 1}}},
+	{"mulu", {instrMulU, {1, 1, 1}}},
+	{"divu", {instrDivU, {1, 1, 1}}},
+	{"modu", {instrModU, {1, 1, 1}}},
+	{"addf", {instrAddF, {1, 1, 1}}},
+	{"subf", {instrSubF, {1, 1, 1}}},
+	{"mulf", {instrMulF, {1, 1, 1}}},
+	{"divf", {instrDivF, {1, 1, 1}}},
+	{"negf", {instrNegF, {1, 1}}},
+	{"and", {instrLogicAnd, {1, 1, 1}}},
+	{"or", {instrLogicOr, {1, 1, 1}}},
+	{"not", {instrLogicNot, {1, 1}}},
+	{"band", {instrBitAnd, {1, 1, 1}}},
+	{"bor", {instrBitOr, {1, 1, 1}}},
+	{"bxor", {instrBitXor, {1, 1, 1}}},
+	{"bnot", {instrBitNot, {1, 1}}},
+	{"bshl", {instrBitShl, {1, 1, 1}}},
+	{"bshr", {instrBitShr, {1, 1, 1}}},
+	{"cmpi", {instrCmpI, {1, 1, 1}}},
+	{"cmpu", {instrCmpU, {1, 1, 1}}},
+	{"cmpf", {instrCmpF, {1, 1, 1}}},
 	{"eq", {instrEq, {1}}},
 	{"neq", {instrNotEq, {1}}},
 	{"less", {instrLess, {1}}},
@@ -283,7 +282,7 @@ assemble(const std::vector<std::string>& tokens, std::vector<Procedure>& procedu
 					}
 
 					if (argLength == 4) {
-						if (innerTok == "loadf") {
+						if (innerTok == "setf") {
 							appendU32(bytecode, parseF32Bits(arg));
 						} else {
 							appendU32(bytecode, parseU32(arg));
@@ -329,7 +328,7 @@ assemble(const std::vector<std::string>& tokens, std::vector<Procedure>& procedu
 			}
 
 			if (argLength == 4) {
-				if (token == "loadf") {
+				if (token == "setf") {
 					appendU32(bytecode, parseF32Bits(arg));
 				} else {
 					appendU32(bytecode, parseU32(arg));

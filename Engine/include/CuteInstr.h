@@ -10,14 +10,15 @@ typedef enum {
 	instrNull    = 0x01,
 
 	instrOut     = 0x10,
-	instrTypeOf  = 0x11,
 
 	instrMov     = 0x20,
-	instrLoadI   = 0x21,
-	instrLoadU   = 0x22,
-	instrLoadF   = 0x23,
-	instrLoadB   = 0x24,
-	instrLoadC   = 0x25,
+	instrLoad    = 0x21,
+	instrStore   = 0x22,
+	instrSetI    = 0x23,
+	instrSetU    = 0x24,
+	instrSetF    = 0x25,
+	instrSetB    = 0x26,
+	instrSetC    = 0x27,
 
 	instrAddI    = 0x30,
 	instrSubI    = 0x31,
@@ -121,7 +122,7 @@ typedef enum {
 ctImageCode 
 ct_image_write(ctImage *img, const char *filepath);
 
-// Load an image from a file
+// Set  an image from a file
 ctImageCode 
 ct_image_read(ctImage *img, const char *filepath);
 

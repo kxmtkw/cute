@@ -43,4 +43,6 @@ ct_engine_run(ctEngine* engine) {
 	if (engine->ctx->has_error) {
 		ct_error_print(engine->ctx->error);
 	}
+
+	engine->exit_code = engine->ctx->exit_code;
 }
