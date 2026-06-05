@@ -443,8 +443,9 @@ ct_ctx_exec(ctContext* ctx)
 			break;
 
 		case instrCall:
-			r1 = load32(instrs, &ctx->ip);
-			ct_ctx_callProcedure(ctx, r1);
+			r1 = instrs[ctx->ip++];
+			check_type(&ctx->registers, r1, ctAtomType_UInt);
+			ct_ctx_callProcedure(ctx, ctx->registers.atoms[r1].as_uint);
 			break;
 
 		case instrReturn:

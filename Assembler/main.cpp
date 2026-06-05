@@ -71,7 +71,7 @@ static const std::map<std::string, InstrSpec> instrMap = {
 	{"jma", {instrJmpAbs, {1}}},
 	{"jmaif", {instrJmpAbsIf, {1, 1}}},
 	{"jmaifnot", {instrJmpAbsIfNot, {1, 1}}},
-	{"call", {instrCall, {4}}},
+	{"call", {instrCall, {1}}},
 	{"ret", {instrReturn, {}}},
 	{"connew", {instrConNew, {1, 1}}},
 	{"condel", {instrConDel, {1}}},
