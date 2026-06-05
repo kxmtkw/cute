@@ -73,13 +73,13 @@ static const std::map<std::string, InstrSpec> instrMap = {
 	{"jmaifnot", {instrJmpAbsIfNot, {1, 1}}},
 	{"call", {instrCall, {4}}},
 	{"ret", {instrReturn, {}}},
-	{"connew", {instrConNew, {1}}},
+	{"connew", {instrConNew, {1, 1}}},
 	{"condel", {instrConDel, {1}}},
-	{"conget", {instrConGet, {1, 1}}},
+	{"conget", {instrConGet, {1, 1, 1}}},
 	{"conset", {instrConSet, {1, 1, 1}}},
-	{"conclone", {instrConClone, {1}}},
+	{"conclone", {instrConClone, {1,1 }}},
 	{"conresize", {instrConResize, {1, 1}}},
-	{"conlen", {instrConLen, {1}}}
+	{"conlen", {instrConLen, {1,1}}}
 };
 
 static std::string

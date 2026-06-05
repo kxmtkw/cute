@@ -8,7 +8,7 @@
 
 #define CUTE_CONF_CALLSTACK_SIZE 1000
 
-#define CUTE_CONF_DEBUG
+// #define CUTE_CONF_DEBUG
 
 
 
