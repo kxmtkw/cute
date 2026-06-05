@@ -8,6 +8,7 @@
 #include "CuteAtom.h"
 #include "CuteConfig.h"
 #include "CuteInstr.h"
+#include "containers/container.h"
 #include "engine/error.h"
 
 #include "context.h"
@@ -104,7 +105,7 @@ ct_ctx_callProcedure(ctContext* ctx, uint32_t procedure_id) {
 		ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_ProcedureError, "Invalid procedure id called."));
 		return;
 	}
-	
+
 	ctCallFrame frame;
 	frame.procedure_id = procedure_id;
 	uint32_t locals_count = ctx->image->procedure_table[procedure_id].locals_count;
@@ -134,6 +135,47 @@ ct_ctx_returnProcedure(ctContext* ctx) {
 
 	ctx->ip = frame.return_ip;
 	ctx->current_frame = ct_ctx_peekFrame(&ctx->callstack);
+}
+
+
+ctTypedAtom
+ct_ctx_loadAtom(ctContext* ctx, uint32_t i) {
+
+	ctCallFrame* frame = ctx->current_frame;
+
+	if (i >= frame->locals.size) {
+		ct_ctx_throwError(
+			ctx, 
+			ct_error_make(ctErrorCode_OutOfBounds, "Tried to load an atom beyond the local count.")
+		);
+		return (ctTypedAtom){ctAtomType_NoneType, {0}};
+	}
+
+	ctTypedAtom typed;
+	typed.atom = frame->locals.atoms[i];
+	typed.type = frame->locals.types[i];
+	return typed;
+}
+
+void
+ct_ctx_storeAtom(ctContext* ctx, uint32_t i, ctTypedAtom typed) {
+
+	ctCallFrame* frame = ctx->current_frame;
+
+	if (i >= frame->locals.size) {
+		ct_ctx_throwError(
+			ctx, 
+			ct_error_make(ctErrorCode_OutOfBounds, "Tried to store an atom beyond the local count.")
+		);
+		return;
+	}
+
+	if (frame->locals.types[i] == ctAtomType_Container) {
+		ct_containers_decRef(ctx->containers, frame->locals.atoms[i].as_container);
+	}
+
+	frame->locals.atoms[i] = typed.atom;
+	frame->locals.types[i] = typed.type;
 }
 
 

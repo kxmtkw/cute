@@ -26,6 +26,7 @@ typedef enum {
 	instrDivI    = 0x33,
 	instrModI    = 0x34,
 	instrNegI    = 0x35,
+	instrAbsI    = 0x36,
 
 	instrAddU    = 0x40,
 	instrSubU    = 0x41,
@@ -38,6 +39,7 @@ typedef enum {
 	instrMulF    = 0x52,
 	instrDivF    = 0x53,
 	instrNegF    = 0x54,
+	instrAbsF    = 0x55,	
 
 	instrLogicAnd    = 0x60,
 	instrLogicOr     = 0x61,
@@ -71,6 +73,7 @@ typedef enum {
 
 	instrCall        = 0xB0,
 	instrReturn      = 0xB1,
+	instrModCall     = 0xB2,
 
 	instrConNew     = 0xC1,
 	instrConDel     = 0xC2,

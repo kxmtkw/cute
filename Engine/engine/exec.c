@@ -60,6 +60,11 @@ check_type(ctRegisterFile* registers, uint index, ctAtomType expected_type) {
 	};
 }
 
+#define DEC_IF_CONTAINER(Index) \
+if (ctx->registers.types[Index] == ctAtomType_Container) { \
+	ct_containers_decRef(ctx->containers, ctx->registers.atoms[Index].as_container); \
+} 
+
 // todo: checking destination type to ensure it isn't a container
 
 #define INSTR_BINARYOP(Type, AtomField, Operation) \
@@ -68,6 +73,7 @@ r2 = instrs[ctx->ip++]; \
 r3 = instrs[ctx->ip++]; \
 check_type(&ctx->registers, r2, Type); \
 check_type(&ctx->registers, r3, Type); \
+DEC_IF_CONTAINER(r1); \
 ctx->registers.atoms[r1].AtomField =  ctx->registers.atoms[r2].AtomField Operation ctx->registers.atoms[r3].AtomField; \
 ctx->registers.types[r1] = Type;
 
@@ -82,6 +88,7 @@ if (ctx->registers.atoms[r3].AtomField == 0) { \
 	ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_ZeroDivision, "Tried to divide by zero.")); \
 	return; \
 } \
+DEC_IF_CONTAINER(r1); \
 ctx->registers.atoms[r1].AtomField =  ctx->registers.atoms[r2].AtomField Operation ctx->registers.atoms[r3].AtomField; \
 ctx->registers.types[r1] = Type;
 
@@ -90,6 +97,7 @@ ctx->registers.types[r1] = Type;
 r1 = instrs[ctx->ip++]; \
 r2 = instrs[ctx->ip++]; \
 check_type(&ctx->registers, r2, Type); \
+DEC_IF_CONTAINER(r1); \
 ctx->registers.atoms[r1].AtomField = Operation ctx->registers.atoms[r2].AtomField; \
 ctx->registers.types[r1] = Type;
 
@@ -100,6 +108,7 @@ r2 = instrs[ctx->ip++]; \
 r3 = instrs[ctx->ip++]; \
 check_type(&ctx->registers, r2, Type); \
 check_type(&ctx->registers, r3, Type); \
+DEC_IF_CONTAINER(r1); \
 ctx->registers.atoms[r1].as_int =  ctx->registers.atoms[r2].AtomField - ctx->registers.atoms[r3].AtomField; \
 ctx->registers.types[r1] = ctAtomType_Int;
 
@@ -123,10 +132,7 @@ check_type(&ctx->registers, r1, ctAtomType_Int); \
 ctx->ip = ctx->registers.atoms[r1].as_int; \
 if (ctx->ip >= ctx->image->header.instruction_count) {printf("Out of range ip\n"); exit(1);};
 
-#define CONTAINER_CHECKS(Index, Function) \
-if (ctx->registers.types[Index] == ctAtomType_Container) { \
-	Function(ctx->containers, ctx->registers.atoms[Index].as_container); \
-} 
+
 
 void
 ct_ctx_exec(ctContext* ctx) 
@@ -172,6 +178,7 @@ ct_ctx_exec(ctContext* ctx)
 		case instrMov:
 			r1 = instrs[ctx->ip++];
 			r2 = instrs[ctx->ip++];
+			DEC_IF_CONTAINER(r1);
 			ctx->registers.atoms[r1] = ctx->registers.atoms[r2];
 			ctx->registers.types[r1] = ctx->registers.types[r2];
 			break;
@@ -180,21 +187,25 @@ ct_ctx_exec(ctContext* ctx)
 		case instrLoad:
 			r1 = instrs[ctx->ip++];
 			r2 = instrs[ctx->ip++];
-			ctx->registers.atoms[r1] = ctx->registers.atoms[r2];
-			ctx->registers.types[r1] = ctx->registers.types[r2];
+			typed = ct_ctx_loadAtom(ctx, r2);
+			DEC_IF_CONTAINER(r1);
+			ctx->registers.atoms[r1] = typed.atom;
+			ctx->registers.types[r1] = typed.type;
 			break;
 
 		case instrStore:
 			r1 = instrs[ctx->ip++];
 			r2 = instrs[ctx->ip++];
-			ctx->registers.atoms[r1] = ctx->registers.atoms[r2];
-			ctx->registers.types[r1] = ctx->registers.types[r2];
+			typed.atom = ctx->registers.atoms[r2];
+			typed.type = ctx->registers.types[r2];
+			ct_ctx_storeAtom(ctx, r1, typed);
 			break;
 
 		case instrSetI:
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
 			memcpy(&i, &u, sizeof(i));
+			DEC_IF_CONTAINER(r1);
 			ctx->registers.atoms[r1].as_int = i;
 			ctx->registers.types[r1] = ctAtomType_Int;
 			break;
@@ -202,6 +213,7 @@ ct_ctx_exec(ctContext* ctx)
 		case instrSetU:
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
+			DEC_IF_CONTAINER(r1);
 			ctx->registers.atoms[r1].as_uint = u;
 			ctx->registers.types[r1] = ctAtomType_UInt;
 			break;
@@ -210,6 +222,7 @@ ct_ctx_exec(ctContext* ctx)
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
 			memcpy(&f, &u, sizeof(f));
+			DEC_IF_CONTAINER(r1);
 			ctx->registers.atoms[r1].as_float = f;
 			ctx->registers.types[r1] = ctAtomType_Float;
 			break;
@@ -217,6 +230,7 @@ ct_ctx_exec(ctContext* ctx)
 		case instrSetB:
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
+			DEC_IF_CONTAINER(r1);
 			ctx->registers.atoms[r1].as_bool = u;
 			ctx->registers.types[r1] = ctAtomType_Bool;
 			break;
@@ -224,6 +238,7 @@ ct_ctx_exec(ctContext* ctx)
 		case instrSetC:
 			r1 = instrs[ctx->ip++];
 			u = load32(instrs, &ctx->ip);
+			DEC_IF_CONTAINER(r1);
 			ctx->registers.atoms[r1].as_char = u;
 			ctx->registers.types[r1] = ctAtomType_Char;
 			break;
@@ -250,6 +265,10 @@ ct_ctx_exec(ctContext* ctx)
 
 		case instrNegI:
 			INSTR_UNARYOP(ctAtomType_Int, as_int, -);
+			break;
+
+		case instrAbsI:
+			ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_IllegalInstruction, "absi not implemented"));
 			break;
 
 		case instrAddU:
@@ -290,6 +309,10 @@ ct_ctx_exec(ctContext* ctx)
 
 		case instrNegF:
 			INSTR_UNARYOP(ctAtomType_Float, as_float, -);
+			break;
+
+		case instrAbsF:
+			ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_IllegalInstruction, "absf not implemented"));
 			break;
 
 		case instrLogicAnd:
@@ -427,6 +450,7 @@ ct_ctx_exec(ctContext* ctx)
 			check_type(&ctx->registers, r2, ctAtomType_UInt);
 			u = ctx->registers.atoms[r2].as_uint;
 			con = ct_containers_newContainer(ctx->containers, u);
+			DEC_IF_CONTAINER(r1);
 			ctx->registers.atoms[r1].as_container = con;
 			ctx->registers.types[r1] = ctAtomType_Container;
 			ct_containers_incRef(ctx->containers, con);
@@ -455,6 +479,7 @@ ct_ctx_exec(ctContext* ctx)
 				return;
 			}
 
+			DEC_IF_CONTAINER(r1);
 			ctx->registers.atoms[r1] = typed.atom;
 			ctx->registers.types[r1] = typed.type;
 			break;
@@ -484,6 +509,7 @@ ct_ctx_exec(ctContext* ctx)
 			con = ct_containers_conClone(
 				ctx->containers, ctx->registers.atoms[r2].as_container, &ctx->error
 			);
+			DEC_IF_CONTAINER(r1);
 			ctx->registers.atoms[r1].as_container = con;
 			ctx->registers.types[r1] = ctAtomType_Container;
 			ct_containers_incRef(ctx->containers, con);
@@ -502,6 +528,7 @@ ct_ctx_exec(ctContext* ctx)
 			r2 = instrs[ctx->ip++];
 			check_type(&ctx->registers, r2, ctAtomType_Container);
 			con = ctx->registers.atoms[r2].as_container;
+			DEC_IF_CONTAINER(r1);
 			ctx->registers.atoms[r1].as_uint = con->size;
 			ctx->registers.types[r1] = ctAtomType_UInt;
 			break;
