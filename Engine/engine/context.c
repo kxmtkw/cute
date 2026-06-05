@@ -8,6 +8,7 @@
 #include "CuteAtom.h"
 #include "CuteConfig.h"
 #include "CuteInstr.h"
+#include "engine/error.h"
 
 #include "context.h"
 
@@ -99,12 +100,17 @@ ct_ctx_callProcedure(ctContext* ctx, uint32_t procedure_id) {
 		return;
 	};
 
+	if (procedure_id >= ctx->image->header.procedure_count) {
+		ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_ProcedureError, "Invalid procedure id called."));
+		return;
+	}
+	
 	ctCallFrame frame;
 	frame.procedure_id = procedure_id;
 	uint32_t locals_count = ctx->image->procedure_table[procedure_id].locals_count;
 
 	if (locals_count > CUTE_CONF_LOCALS_LIMIT) {
-		ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_RecursionDepth, "Too many locals allocated for procedure."));
+		ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_ProcedureError, "Too many locals allocated for procedure."));
 		return;
 	}
 

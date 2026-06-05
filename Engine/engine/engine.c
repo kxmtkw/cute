@@ -1,6 +1,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "CuteAtom.h"
 #include "CuteInstr.h"
@@ -8,6 +9,7 @@
 
 #include "containers/container.h"
 #include "context.h"
+#include "engine/error.h"
 
 
 void
@@ -20,9 +22,17 @@ ct_engine_init(ctEngine* engine) {
 // End the engine and free all resources
 void
 ct_engine_end(ctEngine* engine) {
-	ct_ctx_del(engine->ctx);
+
+	if (engine->ctx) {
+		ct_ctx_del(engine->ctx);
+	}
+	
 	ct_containers_end(&engine->manager);
-	ct_image_free(&engine->image);
+
+	if (engine->image.header.magic_id == ctMagicId) {
+		CUTE_LOG("engine", "Freeing image resources.\n");
+		ct_image_free(&engine->image);
+	}
 
 	CUTE_LOG("engine", "Ending engine.\n");
 }
@@ -32,6 +42,33 @@ void
 ct_engine_loadFile(ctEngine* engine, const char* filepath) {
 	CUTE_LOG("engine", "Loading image file: %s\n", filepath);
 	ctImageCode code = ct_image_read(&engine->image, filepath);
+
+	ctError error;
+
+	switch (code) {
+		case ctImageCode_Success:
+			CUTE_LOG("engine", "Image loaded successfully.\n");
+			break;
+		case ctImageCode_FileNotFound:
+			error = ct_error_make(ctErrorCode_EngineFailure, "Cannot find image file.");
+			break;
+		case ctImageCode_ReadWriteFailure:
+			error = ct_error_make(ctErrorCode_EngineFailure, "Failed to read/write image.");
+			break;
+		case ctImageCode_InvalidImage:
+			error = ct_error_make(ctErrorCode_EngineFailure, "Invalid image file.");
+			break;
+		default:
+			error = ct_error_make(ctErrorCode_EngineFailure, "Unknown error code returned from image read.");
+			break;
+	}
+
+	if (code != ctImageCode_Success) {
+		ct_error_print(error);
+		engine->exit_code = 1;
+		ct_engine_end(engine);
+		exit(1);
+	}
 }
 
 // Run the engine with the loaded image file
