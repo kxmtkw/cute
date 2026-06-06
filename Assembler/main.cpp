@@ -25,6 +25,7 @@ static const std::map<std::string, InstrSpec> instrMap = {
 	{"halt", {instrHalt, {1}}},
 	{"null", {instrNull, {}}},
 	{"out", {instrOut, {1}}},
+	{"typeof", {instrTypeof, {1, 1}}},
 	{"mov", {instrMov, {1, 1}}},
 	{"seti", {instrSetI, {1, 4}}},
 	{"setu", {instrSetU, {1, 4}}},

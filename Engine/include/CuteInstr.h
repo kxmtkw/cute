@@ -10,7 +10,8 @@ typedef enum {
 	instrNull    = 0x01,
 
 	instrOut     = 0x10,
-
+	instrTypeof  = 0x11,
+	
 	instrMov     = 0x20,
 	instrLoad    = 0x21,
 	instrStore   = 0x22,

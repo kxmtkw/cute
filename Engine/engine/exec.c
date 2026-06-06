@@ -55,6 +55,7 @@ if (ctx->registers.types[INDEX] != TYPE) { \
 		ctx, \
 		ct_error_make(ctErrorCode_TypeError, "Unexpected Type.") \
 	); \
+	printf("Got %s, expected %s\n", ct_atom_stringforms[TYPE], ct_atom_stringforms[ctx->registers.types[INDEX]]);\
 	return; \
 };
 
@@ -173,6 +174,14 @@ ct_ctx_exec(ctContext* ctx)
 			out(ctx->registers.atoms[r1], ctx->registers.types[r1]);
 			break;
 
+		case instrTypeof:
+			r1 = instrs[ctx->ip++];
+			r2 = instrs[ctx->ip++];
+			DEC_IF_CONTAINER(r1);
+			ctx->registers.atoms[r1].as_uint = ctx->registers.types[r2];
+			ctx->registers.types[r1] = ctAtomType_UInt;
+			break;
+
 		case instrMov:
 			r1 = instrs[ctx->ip++];
 			r2 = instrs[ctx->ip++];
@@ -182,8 +191,7 @@ ct_ctx_exec(ctContext* ctx)
 			INC_IF_CONTAINER(r1);
 			break;
 
-		// add proper load/store
-		case instrLoad:
+			case instrLoad:
 			r1 = instrs[ctx->ip++];
 			r2 = instrs[ctx->ip++];
 			typed_atom = ct_ctx_loadAtom(ctx, r2);
