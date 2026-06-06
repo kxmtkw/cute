@@ -146,8 +146,16 @@ ct_containers_conSet(ctContainerManager* manager, ctContainer* con, uint32_t ind
 		return;
 	}
 
+	if (con->types[index] == ctAtomType_Container) {
+		ct_containers_decRef(manager, con->atoms[index].as_container);
+	}
+
 	con->atoms[index] = atom.atom;
 	con->types[index] = atom.type;
+
+	if (con->types[index] == ctAtomType_Container) {
+		ct_containers_incRef(manager, con->atoms[index].as_container);
+	}
 }
 
 
