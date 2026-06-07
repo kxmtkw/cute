@@ -1,0 +1,49 @@
+0 [
+	seti r0 -100121
+	
+	setu r16 1
+	call r16
+	out r32
+
+	setf r0 -69
+	setu r16 1
+	call r16
+	out r32
+
+	setu r255 0
+	halt r255
+]
+
+1 [
+	typeof r2 r0
+	
+	setu r3 1
+	cmpu r4 r2 r3
+	eq r4
+
+	seti r5 3
+	setu r16 2
+	jmpifnot r4 r5
+	call r16
+	ret
+
+	setu r3 3
+	cmpu r4 r2 r3
+	eq r4
+
+	seti r5 3
+	setu r16 3
+	jmpifnot r4 r5
+	call r16
+	ret
+]
+
+2 [
+	absi r32 r0
+	ret
+]
+
+3 [
+	absf r32 r0
+	ret
+]
