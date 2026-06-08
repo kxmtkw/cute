@@ -124,15 +124,13 @@ ctx->registers.types[r1] = ctAtomType_Bool;
 
 
 #define INSTR_JMP() \
-r1 = instrs[ctx->ip++]; \
-CHECK_TYPE(r1, ctAtomType_Int); \
-ctx->ip += ctx->registers.atoms[r1].as_int; \
+loadBytes(instrs, &ctx->ip, 4, &i); \
+ctx->ip += i; \
 if (ctx->ip >= ctx->image->header.instruction_count) {ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_IllegalInstruction, "Out of range ip.")); return;};
 
 #define INSTR_JMPABS() \
-r1 = instrs[ctx->ip++]; \
-CHECK_TYPE(r1, ctAtomType_UInt); \
-ctx->ip = ctx->registers.atoms[r1].as_uint; \
+loadBytes(instrs, &ctx->ip, 4, &u); \
+ctx->ip = u; \
 if (ctx->ip >= ctx->image->header.instruction_count) {ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_IllegalInstruction, "Out of range ip.")); return;};
 
 
@@ -408,8 +406,8 @@ ct_ctx_exec(ctContext* ctx)
 			break;
 
 		case instrJmpIf:
-			r2 = instrs[ctx->ip++];
-			CHECK_TYPE(r2, ctAtomType_Bool);
+			r1 = instrs[ctx->ip++];
+			CHECK_TYPE(r1, ctAtomType_Bool);
 			if (ctx->registers.atoms[r2].as_bool) {
 				INSTR_JMP();
 				continue;
@@ -418,8 +416,8 @@ ct_ctx_exec(ctContext* ctx)
 			break;
 			
 		case instrJmpIfNot:
-			r2 = instrs[ctx->ip++];
-			CHECK_TYPE(r2, ctAtomType_Bool);
+			r1 = instrs[ctx->ip++];
+			CHECK_TYPE(r1, ctAtomType_Bool);
 			if (!ctx->registers.atoms[r2].as_bool) {
 				INSTR_JMP();
 				continue;
@@ -434,7 +432,7 @@ ct_ctx_exec(ctContext* ctx)
 		case instrJmpAbsIf:
 			r2 = instrs[ctx->ip++];
 			CHECK_TYPE(r2, ctAtomType_Bool);
-			if (ctx->registers.atoms[r2].as_bool) {
+			if (ctx->registers.atoms[r1].as_bool) {
 				INSTR_JMPABS();
 				continue;
 			}
@@ -442,9 +440,9 @@ ct_ctx_exec(ctContext* ctx)
 			break;
 			
 		case instrJmpAbsIfNot:
-			r2 = instrs[ctx->ip++];
-			CHECK_TYPE(r2, ctAtomType_Bool);
-			if (!ctx->registers.atoms[r2].as_bool) {
+			r1 = instrs[ctx->ip++];
+			CHECK_TYPE(r1, ctAtomType_Bool);
+			if (!ctx->registers.atoms[r1].as_bool) {
 				INSTR_JMPABS();
 				continue;
 			}
