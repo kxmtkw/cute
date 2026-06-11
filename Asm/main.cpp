@@ -19,8 +19,11 @@ int main() {
 	file.close();
 
 	ctTokenizer tokenizer;
-	std::vector<ctToken> tokens = tokenizer.tokenize(&source);
-	printTokenArray(tokens);
+	ctTokenStream stream = tokenizer.tokenize(std::move(source));
 
+	while (stream.peek().type != ctTokenType::EndOfFile) {
+		auto token = stream.next();
+		std::cout << tokenTypeToString(token.type) << " " << stream.getValue(token) << "\n";
+	}
 	return 0;
 }

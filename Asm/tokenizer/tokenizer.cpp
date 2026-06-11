@@ -1,6 +1,7 @@
 #include <cctype>
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "tokens.hpp"
@@ -9,8 +10,8 @@
 
 
 char ctTokenizer::next() {
-	if (mIndex < mSize) {
-		char c = mSource->at(mIndex++);
+	if (mCurrent < mSize) {
+		char c = mSource.at(mCurrent++);
 		return c;
 	}
 	return ' ';
@@ -18,8 +19,8 @@ char ctTokenizer::next() {
 
 
 char ctTokenizer::peek() {
-	if (mIndex < mSize) {
-		char c = mSource->at(mIndex);
+	if (mCurrent < mSize) {
+		char c = mSource.at(mCurrent);
 		return c;
 	}
 	return ' ';
@@ -27,7 +28,7 @@ char ctTokenizer::peek() {
 
 
 void ctTokenizer::backtrack() {
-	mIndex--;
+	mCurrent--;
 }
 
 
@@ -36,7 +37,7 @@ void ctTokenizer::eatWhitspace() {
 	char c;
 	c = next();
 
-	while ((c == ' ' or c == '\n' or c == '\t') and mIndex < mSize) {
+	while ((c == ' ' or c == '\n' or c == '\t') and mCurrent < mSize) {
 		c = next();
 	}
 
@@ -46,42 +47,38 @@ void ctTokenizer::eatWhitspace() {
 
 void ctTokenizer::tokenizeWord() {
 	char c;
-	std::string word;
+	uint start = mCurrent;
 
-	while (true) {
+	while (mCurrent < mSize) {
 		c = peek();
 
 		if (std::isalnum(c) or c == '_') {
-			word.push_back(c);
 			next();
 			continue;
 		}
 		break;
 	}
-
-	mTokens.emplace_back(ctToken(ctTokenType::Word, word));
+	mTokens.emplace_back(ctToken(ctTokenType::Word, start, mCurrent-start));
 }
 
 
 void ctTokenizer::tokenizeNumber() {
 
+	uint start = mCurrent;
 	char c;
-	std::string word;
 	bool is_float = false;
 
-	while (true) {
+	while (mCurrent < mSize) {
 
 		c = peek();
 
 		if (std::isdigit(c)) {
-			word.push_back(c);
 			next();
 			continue;
 		}
 
 		if (c == '.') {
 			is_float = true;
-			word.push_back(c);
 			next();
 			continue;
 		}
@@ -90,50 +87,95 @@ void ctTokenizer::tokenizeNumber() {
 	}
 
 	if (is_float) {
-		mTokens.emplace_back(ctToken(ctTokenType::Float, word));
+		mTokens.emplace_back(ctToken(ctTokenType::Float, start, mCurrent-start));
 	} else {
-		mTokens.emplace_back(ctToken(ctTokenType::Int, word));
+		mTokens.emplace_back(ctToken(ctTokenType::Int, start, mCurrent-start));
 	}
 }
 
+void ctTokenizer::tokenizeChar() {
+	char c = next();
+	
+	if (c != '\'') {
+		// error
+	}
+
+	uint start = mCurrent;
+	next(); // the char
+
+	c = next();
+	
+	if (c != '\'') {
+		// error
+	}
+
+	mTokens.emplace_back(ctToken(ctTokenType::Char, start, 1));
+};
+
+
+void ctTokenizer::tokenizeString() {
+	char c = next();
+	
+	if (c != '\"') {
+		// error
+	}
+
+	uint start = mCurrent;
+
+	c = next();
+
+	while (c != '\"' and mCurrent < mSize) {
+		c = next();
+
+		if (c == '\\') {
+			next();
+		}
+	}
+
+	mTokens.emplace_back(ctToken(ctTokenType::String, start, mCurrent-start-1));
+}
+	
 
 void ctTokenizer::tokenizeSymbol() {
 	std::string s;
 	s.push_back(next());
-	mTokens.emplace_back(ctToken(ctTokenType::Symbol, s));
+	mTokens.emplace_back(ctToken(ctTokenType::Symbol, mCurrent-1, 1));
 }
 
-void ctTokenizer::tokenizeString() {}
 
 
-std::vector<ctToken> ctTokenizer::tokenize(std::string* source) {
+ctTokenStream ctTokenizer::tokenize(std::string source) {
 
-	mSource = source;
+	mSource = std::move(source);
+	mCurrent = 0;
+	mSize = mSource.size();
 	mTokens = {};
-	mIndex = 0;
-	mSize = source->size();
 
 	char c;
 
-	while (mIndex < mSize) {
-		
+	while (mCurrent < mSize) {
 		eatWhitspace();
 
 		c = peek();
 
-		if (std::isalpha(c)) {
+		if (std::isalpha(c) or c == '_') {
 			tokenizeWord();
 		}
 		else if (std::isdigit(c)) {
 			tokenizeNumber();
+		}
+		else if (c == '\'') {
+			tokenizeChar();
+		}
+		else if (c == '\"') {
+			tokenizeString();
 		}
 		else {
 			tokenizeSymbol();
 		}
 	}
 
-	ctToken tok(ctTokenType::EndOfFile, "");
-	mTokens.push_back(tok);
+	mTokens.emplace_back(ctToken(ctTokenType::EndOfFile, 0 ,0));
 
-	return mTokens;
+	return ctTokenStream(std::move(mSource), std::move(mTokens));
 }

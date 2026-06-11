@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 enum class ctTokenType {
@@ -12,21 +13,22 @@ enum class ctTokenType {
 	Int,
 	Float,
 	String,
+	Char,
 	Symbol
 };
 
 struct ctToken {
 	ctTokenType type;
-	std::string payload;
+	uint start;
+	uint len;
 
 	ctToken() = default;
-	ctToken(ctTokenType t, std::string s): type(t), payload(s) {};
+	ctToken(ctTokenType t, uint s, uint l): type(t), start(s), len(l) {};
 };
 
 
-
 static inline std::string 
-_tokenTypeToString(ctTokenType type) {
+tokenTypeToString(ctTokenType type) {
     switch (type) {
         case ctTokenType::EndOfFile: return "EndOfFile";
         case ctTokenType::Word:      return "Word";
@@ -38,16 +40,34 @@ _tokenTypeToString(ctTokenType type) {
     }
 }
 
-static inline void 
-printToken(const ctToken& token) {
-    std::cout << "[ " << _tokenTypeToString(token.type) << " " << token.payload << " ]\n";
-}
 
-static inline
-void printTokenArray(const std::vector<ctToken>& tokens) {
-    for (const auto& token : tokens) {
-        printToken(token);
-    }
-}
+class ctTokenStream {
+
+	std::string mSource;
+	std::vector<ctToken> mTokens;
+	uint mCurrent;
+
+	// resolve backslashes of string tokens
+	std::string resolveBackSlashes(const std::string& str);
+
+public:
+
+	// get the next token
+	ctToken next();
+	// take a look at the next token
+	ctToken peek();
+	// backtrack by one token
+	void backtrack();
+	// back to index 0
+	void reset();
+
+	// get the value of the token.
+	std::string getValue(ctToken& token);
+	
+	ctTokenStream(std::string src, std::vector<ctToken> tokens): 
+	mSource(std::move(src)), mTokens(std::move(tokens)), mCurrent(0) {}
+};
+
+
 
 #endif // TOKENIZER_TOKENS_H
