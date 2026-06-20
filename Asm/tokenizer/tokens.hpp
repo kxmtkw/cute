@@ -63,6 +63,12 @@ public:
 
 	// get the value of the token.
 	std::string getValue(ctToken& token);
+
+	// expect a certain token type and write its value to the string provided.
+	bool expectTokenType(ctTokenType type, std::string& dest);
+
+	// expect a certain string literal
+	bool expectToken(const std::string& dest);
 	
 	ctTokenStream(std::string src, std::vector<ctToken> tokens): 
 	mSource(std::move(src)), mTokens(std::move(tokens)), mCurrent(0) {}

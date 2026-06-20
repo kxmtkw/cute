@@ -137,8 +137,8 @@ void ctTokenizer::tokenizeString() {
 	
 
 void ctTokenizer::tokenizeSymbol() {
-	std::string s;
-	s.push_back(next());
+	char c = next();
+	if (c == ' ' or c == '\n' or c == '\t') {return;}
 	mTokens.emplace_back(ctToken(ctTokenType::Symbol, mCurrent-1, 1));
 }
 

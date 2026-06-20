@@ -78,3 +78,31 @@ std::string ctTokenStream::getValue(ctToken& token) {
 
 	return mSource.substr(token.start, token.len);
 }
+
+
+bool ctTokenStream::expectTokenType(ctTokenType type, std::string& dest) {
+	ctToken token = peek();
+
+	if (token.type != type) {
+		return false;
+	}
+
+	dest = getValue(token);
+	next();
+	return true;
+}
+
+
+bool ctTokenStream::expectToken(const std::string& dest) {
+
+	ctToken token = next();
+
+	if (getValue(token) == dest) {
+		return true;
+	}
+	else {
+		backtrack();
+		return false;
+	}
+	
+}
