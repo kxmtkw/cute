@@ -164,6 +164,9 @@ ctTokenStream ctTokenizer::tokenize(std::string source) {
 		else if (std::isdigit(c)) {
 			tokenizeNumber();
 		}
+		else if (c == '#') {
+			while (peek() != '\n') { next(); }
+		}
 		else if (c == '\'') {
 			tokenizeChar();
 		}

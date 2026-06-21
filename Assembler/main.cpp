@@ -13,7 +13,7 @@ int main() {
 
 	std::string source;
 	
-	std::ifstream file("../asm.test");
+	std::ifstream file("asm.test");
 
 	std::stringstream buffer;
 	buffer << file.rdbuf();
@@ -35,6 +35,6 @@ int main() {
 	program->accept(printer);
 
 	ctCodeGenerator generator;
-	generator.generate(*program, "../asm.cti");
+	generator.generate(*program, "asm.cti");
 	return 0;
 }
