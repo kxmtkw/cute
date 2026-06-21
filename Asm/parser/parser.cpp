@@ -1,4 +1,5 @@
 #include "parser.hpp"
+#include "tokenizer/tokens.hpp"
 #include <string>
 
 std::unique_ptr<ctProgramNode> ctParser::parse(ctTokenStream& stream) {
@@ -6,6 +7,8 @@ std::unique_ptr<ctProgramNode> ctParser::parse(ctTokenStream& stream) {
 	auto program = std::make_unique<ctProgramNode>();
 
 	while (mStream->peek().type != ctTokenType::EndOfFile) {
+		ctToken tok = stream.peek();
+
 		auto proc = parseProcedure();
 		if (proc) {
 			program->procedures.push_back(std::move(proc));
@@ -75,7 +78,6 @@ std::unique_ptr<ctOperationNode> ctParser::parseOperation() {
 		std::string sign = "";
 		if (mStream->expectToken("-")) {
 			sign = "-";
-			mStream->next();
 			token = mStream->peek();
 		}
 

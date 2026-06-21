@@ -29,9 +29,11 @@ public:
     virtual void visit(ctProgramNode& node) = 0;
     virtual void visit(ctProcedureNode& node) = 0;
     virtual void visit(ctOperationNode& node) = 0;
+
 	virtual void visit(ctWordNode& node) = 0;
 	virtual void visit(ctRegisterNode& node) = 0;
     virtual void visit(ctSlotNode& node) = 0;
+
 	virtual void visit(ctIntNode& node) = 0;
 	virtual void visit(ctFloatNode& node) = 0;
 };
@@ -64,7 +66,10 @@ struct ctOperationNode : public ctNode {
 };
 
 
-struct ctOperandNode : public ctNode {};
+struct ctOperandNode : public ctNode {
+	virtual void accept(ctNodeVisitor& visitor) override = 0;
+};
+
 
 struct ctRegisterNode : public ctOperandNode {
 	std::string val;
@@ -84,19 +89,21 @@ struct ctWordNode : public ctOperandNode {
 };
 
 
-struct ctLiteralNode : public ctOperandNode {};
+struct ctLiteralNode : public ctOperandNode {
+	virtual void accept(ctNodeVisitor& visitor) override = 0;
+};
+
 
 struct ctIntNode : public ctLiteralNode {
 	std::string val;
 	void accept(ctNodeVisitor& visitor) override { visitor.visit(*this); }
 };
 
+
 struct ctFloatNode : public ctLiteralNode {
 	std::string val;
 	void accept(ctNodeVisitor& visitor) override { visitor.visit(*this); }
 };
-
-
 
 
 class ctNodePrinter : public ctNodeVisitor {
@@ -123,6 +130,7 @@ public:
 			std::cout << "\n";
 		}
 	}
+
 
 	void visit(ctRegisterNode& node) override {
 		std::cout << "Reg: " << node.val;

@@ -1,3 +1,4 @@
+#include "codegen/generator.hpp"
 #include "parser/parser.hpp"
 #include "tokenizer/tokenizer.hpp"
 #include "tokenizer/tokens.hpp"
@@ -29,7 +30,11 @@ int main() {
 	stream.reset();
 	ctParser parser;
 	auto program = parser.parse(stream);
+
 	ctNodePrinter printer;
-	printer.visit(*program);
+	program->accept(printer);
+
+	ctCodeGenerator generator;
+	generator.generate(*program, "../asm.cti");
 	return 0;
 }

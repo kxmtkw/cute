@@ -2,6 +2,7 @@
 file(GLOB TOKENIZER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/tokenizer/*.cpp")
 file(GLOB PARSER_SRC "${CMAKE_CURRENT_SOURCE_DIR}/parser/*.cpp")
 file(GLOB CODEGEN_SRC "${CMAKE_CURRENT_SOURCE_DIR}/codegen/*.cpp")
+file(GLOB UTILS_SRC "${CMAKE_CURRENT_SOURCE_DIR}/utils/*.cpp")
 
 add_executable(
 	asme
@@ -9,6 +10,7 @@ add_executable(
 	${TOKENIZER_SRC}
 	${PARSER_SRC}
 	${CODEGEN_SRC}
+	${UTILS_SRC}
 )
 
 target_link_libraries(asme PRIVATE CuteEngine)
