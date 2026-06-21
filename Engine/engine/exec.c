@@ -408,21 +408,21 @@ ct_ctx_exec(ctContext* ctx)
 		case instrJmpIf:
 			r1 = instrs[ctx->ip++];
 			CHECK_TYPE(r1, ctAtomType_Bool);
-			if (ctx->registers.atoms[r2].as_bool) {
+			if (ctx->registers.atoms[r1].as_bool) {
 				INSTR_JMP();
 				continue;
 			}
-			ctx->ip++;
+			ctx->ip += 4;
 			break;
 			
 		case instrJmpIfNot:
 			r1 = instrs[ctx->ip++];
 			CHECK_TYPE(r1, ctAtomType_Bool);
-			if (!ctx->registers.atoms[r2].as_bool) {
+			if (!ctx->registers.atoms[r1].as_bool) {
 				INSTR_JMP();
 				continue;
 			}
-			ctx->ip++;
+			ctx->ip += 4;
 			break;
 
 		case instrJmpAbs:
@@ -430,13 +430,13 @@ ct_ctx_exec(ctContext* ctx)
 			break;
 
 		case instrJmpAbsIf:
-			r2 = instrs[ctx->ip++];
+			r1 = instrs[ctx->ip++];
 			CHECK_TYPE(r2, ctAtomType_Bool);
 			if (ctx->registers.atoms[r1].as_bool) {
 				INSTR_JMPABS();
 				continue;
 			}
-			ctx->ip++;
+			ctx->ip += 4;
 			break;
 			
 		case instrJmpAbsIfNot:
@@ -446,7 +446,7 @@ ct_ctx_exec(ctContext* ctx)
 				INSTR_JMPABS();
 				continue;
 			}
-			ctx->ip++;
+			ctx->ip += 4;
 			break;
 
 		case instrCall:
