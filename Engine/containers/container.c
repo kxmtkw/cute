@@ -189,8 +189,10 @@ ct_containers_conResize(ctContainerManager* manager, ctContainer* con, uint32_t 
 	temp.atoms = (ctAtom*) (ptr);
 	temp.types = (ctAtomTypeSize*) (ptr + sizeof(ctAtom) * new_size);
 
-	memcpy(temp.atoms, con->atoms, con->size * sizeof(ctAtom));
-	memcpy(temp.types, con->types, con->size * sizeof(ctAtomTypeSize));
+	size_t size_to_copy = new_size < temp.size ? new_size: temp.size;
+
+	memcpy(temp.atoms, con->atoms, size_to_copy * sizeof(ctAtom));
+	memcpy(temp.types, con->types, size_to_copy * sizeof(ctAtomTypeSize));
 
 	free(con->atoms);
 
