@@ -12,16 +12,21 @@ extern "C" {
 
 
 #include "parser/nodes.hpp"
+#include "utils/utils.hpp"
 
 
 
 class ctCodeGenerator : ctNodeVisitor {
+
+	ctUtils::ctErrorCollector& mError;
 
 	std::unique_ptr<ctImage> mImage = nullptr;
 	std::vector<ctImageProcedure> mProcedures;
 	std::vector<ctInstructionSize> mInstrPool;
 
 public:
+
+	ctCodeGenerator(ctUtils::ctErrorCollector& _error): mError(_error) {};
 
 	void visit(ctProgramNode& node) override;
 	void visit(ctProcedureNode& node) override;

@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <memory>
+#include <format>
 
 #include "parser/nodes.hpp"
 #include "generator.hpp"
@@ -17,8 +18,6 @@ void ctCodeGenerator::visit(ctProgramNode& node) {
 	mImage->header.procedure_count = mProcedures.size();
 	mImage->procedure_table = mProcedures.data();
 	mImage->instruction_pool = mInstrPool.data();
-
-	std::cout << mInstrPool.size() << "\n";
 }
 
 
@@ -38,6 +37,11 @@ void ctCodeGenerator::visit(ctProcedureNode& node) {
 
 void ctCodeGenerator::visit(ctOperationNode& node) {
 	
+	if (!ctInstrMap.contains(node.opcode)) {
+		mError.accumulate(std::format("Unknown Instruction '{}'", node.opcode));
+		return;
+	}
+
 	ctInstrSpec spec = ctInstrMap.at(node.opcode);
 	mInstrPool.push_back(spec.opcode);
 
@@ -91,6 +95,8 @@ void ctCodeGenerator::generate(ctProgramNode& node, std::string outfile) {
 	mProcedures.clear();
 
 	node.accept(*this);
+
+	if (mError.hasError()) {return;}
 
 	ct_image_write(mImage.get(), outfile.data());
 }
