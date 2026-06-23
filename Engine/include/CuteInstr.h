@@ -22,6 +22,7 @@ typedef enum {
 	instrSetF    = 0x27,
 	instrSetB    = 0x28,
 	instrSetC    = 0x29,
+	instrSetN    = 0x2A,
 
 	instrAddI    = 0x30,
 	instrSubI    = 0x31,

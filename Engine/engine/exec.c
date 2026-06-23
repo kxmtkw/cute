@@ -247,6 +247,13 @@ ct_ctx_exec(ctContext* ctx)
 			ctx->registers.types[r1] = ctAtomType_Char;
 			break;
 
+		case instrSetN:
+			r1 = instrs[ctx->ip++];
+			DEC_IF_CONTAINER(r1);
+			ctx->registers.atoms[r1].as_uint = 0;
+			ctx->registers.types[r1] = ctAtomType_NoneType;
+			break;
+
 		case instrAddI:
 			INSTR_BINARYOP(ctAtomType_Int, as_int, +);
 			break;
