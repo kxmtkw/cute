@@ -1,21 +1,42 @@
-## Cute 
+# Cute (,,>﹏<,,)
 
 **Cute** is a cute little language runtime that I am working on.
 
-### Features
+## Arch
 
-Cute is a typed virtual machine. Though I am still finalizing on the architecture.
+The project is divided into two parts:
+- Engine
+- Assembler
+
+
+### `Engine`
+The main runtime that executes the bytecode.
++ Register-based execution
++ Typed instruction set
++ Dynamic containers (objects) supported along with reference GC
+
+See the instruction set at: [instructions](docs/arch.md)
+
+### `Assembler`
+A simple assembler that turns human readable instructions into bytecode.
+The assembler will be slowly evolved into a proper compiler.
+
+Examples of the Cute assembly language are below.
+
+
+### Example
 
 Here is a basic program in the cute asm:
 
 ```
 
-0 [
-	loadi r0 10  ; load an integar with value 10 to r0
-	loadi r1 5   ; load an integar with value 5 to r1 
-	addi r0 r1   ; add r0 and r1 and store the result back to r0
-	out r0 0     ; output the value of r0, the 0 is the format.
-	halt 0       ; halt the engine with code 0
+proc 0 [
+	seti r0 10;      # Set r0 to int 10
+	seti r1 5;       # Set r1 to int 5
+	addi r2 r0 r1;   # Add r0 + r1 and store the result to r2
+	out r2 0;        # Output the value in r2
+	setu r255 0;     # Set r255 to 0
+	halt r255;       # Halt engine with return code 0
 ]
 
 ; will print [ int 15 ]
@@ -26,16 +47,18 @@ Here is one with more than one procedures:
 
 ```
 
-0 [
-	loadi r0 5
-	call 1
-	out r0 0 
-	halt 0
+proc 0 [
+	seti r0 5;
+	setu r16 1;
+	call r16;
+	out r32 0; 
+	setu r255 0
+	halt r255;
 ]
 
-1 [
-	muli r0 r0
-	ret
+proc 1 [
+	muli r32 r0 r0;
+	ret;
 ]
 
 ; procedure(1) acts a square function in this example
