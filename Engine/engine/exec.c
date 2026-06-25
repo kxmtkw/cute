@@ -39,8 +39,6 @@ out(ctAtom atom, ctAtomTypeSize type) {
 			printf("[ %s %f ]\n", name, atom.as_float); break;
 		case ctAtomType_Bool:
 			printf("[ %s %u ]\n", name, atom.as_bool ? 1 : 0); break;
-		case ctAtomType_Char:
-			printf("[ %s %c ]\n", name, atom.as_char); break;
 		case ctAtomType_Container:
 			printf("[ %s %p ]\n", name, atom.as_container); break;
 		break;
@@ -235,14 +233,6 @@ ct_ctx_exec(ctContext* ctx)
 			DEC_IF_CONTAINER(r1);
 			ctx->registers.atoms[r1].as_bool = u;
 			ctx->registers.types[r1] = ctAtomType_Bool;
-			break;
-
-		case instrSetC:
-			r1 = instrs[ctx->ip++];
-			loadBytes(instrs, &ctx->ip, 4, &u);
-			DEC_IF_CONTAINER(r1);
-			ctx->registers.atoms[r1].as_char = u;
-			ctx->registers.types[r1] = ctAtomType_Char;
 			break;
 
 		case instrSetN:
