@@ -108,17 +108,15 @@ ctx->registers.types[r1] = Type;
 #define INSTR_CMP(Type, AtomField) \
 r1 = instrs[ctx->ip++]; \
 r2 = instrs[ctx->ip++]; \
-r3 = instrs[ctx->ip++]; \
+CHECK_TYPE(r1, Type); \
 CHECK_TYPE(r2, Type); \
-CHECK_TYPE(r3, Type); \
-DEC_IF_CONTAINER(r1); \
-ctx->registers.atoms[r1].as_int =  ctx->registers.atoms[r2].AtomField - ctx->registers.atoms[r3].AtomField; \
-ctx->registers.types[r1] = ctAtomType_Int;
+ctx->cmp_diff =  ctx->registers.atoms[r1].AtomField - ctx->registers.atoms[r2].AtomField;
 
 
 #define INSTR_CMPRESOLVERS(Operation) \
 r1 = instrs[ctx->ip++]; \
-if (ctx->registers.atoms[r1].as_int Operation 0) {ctx->registers.atoms[r1].as_bool = 1;} \
+DEC_IF_CONTAINER(r1); \
+if (ctx->cmp_diff Operation 0) {ctx->registers.atoms[r1].as_bool = 1;} \
 else {ctx->registers.atoms[r1].as_bool = 0;} \
 ctx->registers.types[r1] = ctAtomType_Bool;
 
@@ -141,7 +139,7 @@ ct_ctx_exec(ctContext* ctx)
 	ctInstructionSize* instrs = ctx->image->instruction_pool;
 	ctRegisterFile* registers = &ctx->registers;
 	
-	uint8_t r1, r2, r3;
+	uint8_t r1, r2, r3, r4;
 
 	int32_t  i;
 	uint32_t u;
@@ -541,6 +539,19 @@ ct_ctx_exec(ctContext* ctx)
 			r2 = instrs[ctx->ip++];
 			CHECK_TYPE(r2, ctAtomType_UInt);
 			ct_containers_conResize(ctx->containers, ctx->registers.atoms[r1].as_container, ctx->registers.atoms[r2].as_uint, &ctx->error);
+			break;
+
+		case instrConCopy:
+			r1 = instrs[ctx->ip++];
+			r2 = instrs[ctx->ip++];
+			CHECK_TYPE(r2, ctAtomType_Container);
+			con = ct_containers_conCopy(
+				ctx->containers, ctx->registers.atoms[r2].as_container, &ctx->error
+			);
+			DEC_IF_CONTAINER(r1);
+			ctx->registers.atoms[r1].as_container = con;
+			ctx->registers.types[r1] = ctAtomType_Container;
+			ct_containers_incRef(ctx->containers, con);
 			break;
 
 		case instrConClone:

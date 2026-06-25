@@ -47,6 +47,7 @@ typedef struct {
 	ctRegisterFile registers;
 	ctCallStack    callstack;
 	ctCallFrame*   current_frame;
+	double         cmp_diff;
 	bool           running;
 	bool           has_error;
 	ctError        error;
