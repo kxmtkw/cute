@@ -37,6 +37,7 @@ struct _ctContainer {
 	uint32_t         id;
 	uint32_t         ref_count;
 	uint32_t         size;
+	uint32_t         sub_containers;
 	ctAtom*          atoms;
 	ctAtomTypeSize*  types;
 };
