@@ -8,7 +8,8 @@ instruction [destination] [operands]
 Instructions are divided into different categories.
 The prefix `rx` will represent any register, `sx` will represent any slot. `lb` is used for literal bytes, i.e. for ints, uints, floats in the bytecode.
 
-In total, there are `67` instructions.
+In total, there are `66` instructions.
+
 
 ### Engine Control
 
@@ -26,11 +27,24 @@ Does nothing. Can be used as a safe placeholder, if writing a compiler.
 null
 ```
 
+#### Assert `0x02`
+Asserts whether a condition is true.
+```
+assert rx
+```
+
 #### Out `0x10`
 Used to display the type and data held by an atom.
 ```
 out rx
 ```
+
+#### BitOut `0x11`
+Dumps the bits and hex form of an atom
+```
+bitout rx
+```
+
 
 ### Memory Operations
 
@@ -90,13 +104,7 @@ Sets an `bool` atom to a register.
 setb rx lb
 ```
 
-#### SetC `0x29`
-Sets an `char` atom to a register.
-```
-setc rx lb
-```
-
-#### SetN `0x2A`
+#### SetN `0x29`
 Sets an `none` atom to a register.
 ```
 setu rx
@@ -157,6 +165,8 @@ All operands are registers. `src`s are type checked before the operation is perf
 
 #### LogicNot `0x62`
 
+#### LogicXor `0x64`
+
 All of these are self-explantory.
 - The binary operations have the format:
 ```
@@ -208,10 +218,10 @@ The logic operations only work on the `uint` atom.
 All of these are self-explantory.
 - The binary operations have the format:
 ```
-cmpi/cmpu/cmpf rx ry rz
+cmpi/cmpu/cmpf rx ry
 ```
 
-Where `rx` stores a difference between the values as `int`. This is usless unless you use the following cmp resolvers which turn this difference into a boolean value:
+Compares two values and sets a flag. This is usless unless you use the following cmp resolvers which turn this flag into a boolean value:
 
 #### Eq `0x90`
 
@@ -229,7 +239,7 @@ All of these have the format:
 ```
 opcode rx
 ```
-The register `rx` is mutated in place and this instruction has no destination register.
+The register `rx` holds the `bool` form of the flag as resolved from the flag.
 
 ### Control Flow
 
@@ -271,7 +281,7 @@ Where rx must hold a `bool` atom.
 ### Procedures
 
 #### Call `0xB0`
-Call a prcodeure.
+Call a procedure.
 ```
 call rx
 ```
@@ -282,7 +292,6 @@ Return from a procedure
 ```
 ret
 ```
-Note that values can't be returned. This just returns to the caller.
 
 
 ### Containers
@@ -290,9 +299,9 @@ Note that values can't be returned. This just returns to the caller.
 #### ConNew `0xC1`
 Make a new container with a given size.
 ```
-connew rx
+connew rx ry
 ```
-Where `rx` is a `uint` that holds the size of the required container.
+Where `ry` is a `uint` that holds the size of the required container.
 
 #### ConDel `0xC2`
 Delete the particular reference of the container.
@@ -335,13 +344,22 @@ The runtime will:
 - Skip if `new_size` == `current_size`
 
 
-#### ConClone `0xC7`
-Create a shallow clone of a container.
+#### ConCopy `0xC7`
+Create a shallow copy of a container.
+```
+concopy rx ry
+```
+Where `rx` is the dest register and `ry` holds the container to be copied.
+
+> Sub Containers are NOT copied, only their references are.
+
+#### ConClone `0xC8`
+Create a clone of the container. This creates an exact 1-1 replica of the container, deep copying everything inside it.
 ```
 conclone rx ry
 ```
 Where `rx` is the dest register and `ry` holds the container to be cloned.
 
-> Sub Containers are NOT cloned, however their refcount is incremented as usual.
+> Sub Containers are recursively cloned.
 
 
