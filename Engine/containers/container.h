@@ -31,10 +31,23 @@ void
 ct_containers_delContainer(ctContainerManager* manager, ctContainer* container);
 
 void
-ct_containers_incRef(ctContainerManager* manager, ctContainer* container);
+ct_containers_shallowDelContainer(ctContainerManager* manager, ctContainer* con);
 
-inline void
-ct_containers_decRef(ctContainerManager* manager, ctContainer* container);
+
+static inline void
+ct_containers_incRef(ctContainerManager* manager, ctContainer* con) {
+	con->ref_count++;
+	CUTE_LOG("containers", "Container (%u) (%p) referenced. References: %u\n", con->id, con, con->ref_count);
+}
+
+static inline void
+ct_containers_decRef(ctContainerManager* manager, ctContainer* con) {
+	con->ref_count--;
+	CUTE_LOG("containers", "Container (%u) (%p) dereferenced. References: %u\n", con->id, con, con->ref_count);
+	if (con->ref_count == 0) {
+		ct_containers_delContainer(manager, con);
+	}
+}
 
 
 // Get an atom in the container. Will return ctConManagerCode_OutOfBounds if index is out of bounds
@@ -45,6 +58,9 @@ ct_containers_conGet(ctContainerManager* manager, ctContainer* container, uint32
 void
 ct_containers_conSet(ctContainerManager* manager, ctContainer* container, uint32_t index, ctTypedAtom atom, ctError* error);
 
+// Create a shallow copy of a container
+ctContainer*
+ct_containers_conCopy(ctContainerManager* manager, ctContainer* src, ctError* error);
 
 // Makes a clone of the container with the same atoms and types but different id
 ctContainer*

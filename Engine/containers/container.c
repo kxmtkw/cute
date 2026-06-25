@@ -65,7 +65,7 @@ void
 ct_containers_end(ctContainerManager* manager) {
 
 	while (manager->container_count > 0) {
-		ct_containers_delContainer(manager, manager->containers[manager->container_count-1]);
+		ct_containers_shallowDelContainer(manager, manager->containers[manager->container_count-1]);
 	}
 		
 	manager->container_count = 0;
@@ -90,6 +90,7 @@ ct_containers_newContainer(ctContainerManager* manager, uint32_t size) {
 	manager->internal_id++;
 	con->ref_count = 0;
 	con->size = size;
+	con->sub_containers = 0;
 	memset(con->types, ctAtomType_NoneType, size);
 	
 	ct_container_manager_pushToArray(manager, con);
@@ -101,27 +102,34 @@ ct_containers_newContainer(ctContainerManager* manager, uint32_t size) {
 
 void
 ct_containers_delContainer(ctContainerManager* manager, ctContainer* con) {
+
 	ct_containers_removeFromArray(manager, con);
+
+	uint32_t j = 0;
+	
+	for (uint32_t i = 0; i < con->size && j < con->sub_containers; i++) {
+		if (con->types[i] == ctAtomType_Container) {
+			ct_containers_decRef(manager, con->atoms[i].as_container);
+			j++;
+		}
+	}
 	CUTE_LOG("containers", "Container (%u) (%p) deallocated.\n", con->id, con);
+
 	free(con);
 }
 
-void
-ct_containers_incRef(ctContainerManager* manager, ctContainer* con) {
-	con->ref_count++;
-	CUTE_LOG("containers", "Container (%u) (%p) referenced. References: %u\n", con->id, con, con->ref_count);
-}
 
 void
-ct_containers_decRef(ctContainerManager* manager, ctContainer* con) {
+ct_containers_shallowDelContainer(ctContainerManager* manager, ctContainer* con) {
 
-	con->ref_count--;
-	CUTE_LOG("containers", "Container (%u) (%p) dereferenced. References: %u\n", con->id, con, con->ref_count);
+	ct_containers_removeFromArray(manager, con);
 
-	if (con->ref_count == 0) {
-		ct_containers_delContainer(manager, con);
-	}
+	CUTE_LOG("containers", "Container (%u) (%p) deallocated.\n", con->id, con);
+
+	free(con);
 }
+
+
 
 ctTypedAtom
 ct_containers_conGet(ctContainerManager* manager, ctContainer* con, uint32_t index, ctError* error) {
@@ -148,6 +156,7 @@ ct_containers_conSet(ctContainerManager* manager, ctContainer* con, uint32_t ind
 
 	if (con->types[index] == ctAtomType_Container) {
 		ct_containers_decRef(manager, con->atoms[index].as_container);
+		if (con->sub_containers > 0) con->sub_containers--; // remove these checks later since sub_containers will always be ++
 	}
 
 	con->atoms[index] = atom.atom;
@@ -155,19 +164,8 @@ ct_containers_conSet(ctContainerManager* manager, ctContainer* con, uint32_t ind
 
 	if (con->types[index] == ctAtomType_Container) {
 		ct_containers_incRef(manager, con->atoms[index].as_container);
+		con->sub_containers++; 
 	}
-}
-
-
-ctContainer*
-ct_containers_conClone(ctContainerManager* manager, ctContainer* src, ctError* error) {
-	
-	ctContainer* clone = ct_containers_newContainer(manager, src->size);
-
-	memcpy(clone->atoms, src->atoms, src->size * sizeof(ctAtom));
-	memcpy(clone->types, src->types, src->size * sizeof(ctAtomTypeSize));
-	
-	return clone;
 }
 
 
@@ -181,6 +179,8 @@ ct_containers_conResize(ctContainerManager* manager, ctContainer* con, uint32_t 
 	
 	ctContainer temp;
 	temp.size = con->size; // for logging later
+
+	// Cannot use realloc here because of my weird hack
 
 	uint8_t* ptr = malloc(
 		sizeof(ctAtom) * new_size +
@@ -201,4 +201,52 @@ ct_containers_conResize(ctContainerManager* manager, ctContainer* con, uint32_t 
 	con->size = new_size;
 
 	CUTE_LOG("containers", "Resized container(%u) [%p] from %u to %u\n", con->id, con, temp.size, new_size);
+}
+
+
+ctContainer*
+ct_containers_conCopy(ctContainerManager* manager, ctContainer* src, ctError* error) {
+	
+	ctContainer* copy = ct_containers_newContainer(manager, src->size);
+
+	memcpy(copy->atoms, src->atoms, src->size * sizeof(ctAtom));
+	memcpy(copy->types, src->types, src->size * sizeof(ctAtomTypeSize));
+
+	copy->sub_containers = src->sub_containers;
+	uint32_t j = 0;
+	
+	for (uint32_t i = 0; i < src->size && j < src->sub_containers; i++) {
+		if (src->types[i] == ctAtomType_Container) {
+			ct_containers_incRef(manager, src->atoms[i].as_container);
+			j++;
+		}
+	}
+	
+	CUTE_LOG("containers", "Copied container(%u) [%p] from container(%u) [%p]\n", copy->id, copy, src->id, src);
+
+	return copy;
+}
+
+
+ctContainer*
+ct_containers_conClone(ctContainerManager* manager, ctContainer* src, ctError* error) {
+
+	ctContainer* clone = ct_containers_newContainer(manager, src->size);
+
+	memcpy(clone->atoms, src->atoms, src->size * sizeof(ctAtom));
+	memcpy(clone->types, src->types, src->size * sizeof(ctAtomTypeSize));
+
+	clone->sub_containers = src->sub_containers;
+	uint32_t j = 0;
+	
+	for (uint32_t i = 0; i < src->size && j < src->sub_containers; i++) {
+		if (src->types[i] == ctAtomType_Container) {
+			clone->atoms[i].as_container = ct_containers_conClone(manager, src->atoms[i].as_container, error);
+			ct_containers_incRef(manager, clone->atoms[i].as_container);
+			j++;
+		}
+	}
+	
+	CUTE_LOG("containers", "Cloned container(%u) [%p] from container(%u) [%p]\n", clone->id, clone, src->id, src);
+	return clone;
 }
