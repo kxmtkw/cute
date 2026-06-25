@@ -90,7 +90,7 @@ if (ctx->registers.atoms[r3].AtomField == 0) { \
 	return; \
 } \
 DEC_IF_CONTAINER(r1); \
-ctx->registers.atoms[r1].AtomField =  ctx->registers.atoms[r2].AtomField Operation ctx->registers.atoms[r3].AtomField; \
+ctx->registers.atoms[r1].AtomField = (ctx->registers.atoms[r2].AtomField Operation ctx->registers.atoms[r3].AtomField); \
 ctx->registers.types[r1] = Type;
 
 
@@ -334,6 +334,10 @@ ct_ctx_exec(ctContext* ctx)
 
 		case instrLogicNot:
 			INSTR_UNARYOP(ctAtomType_Bool, as_bool, !);
+			break;
+
+		case instrLogicXor:
+			INSTR_BINARYOP(ctAtomType_Bool, as_bool, !=);
 			break;
 
 		case instrBitAnd:

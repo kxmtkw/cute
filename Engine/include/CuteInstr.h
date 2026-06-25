@@ -47,6 +47,7 @@ typedef enum {
 	instrLogicAnd    = 0x60,
 	instrLogicOr     = 0x61,
 	instrLogicNot    = 0x62,
+	instrLogicXor    = 0x63,
 
 	instrBitAnd      = 0x70,
 	instrBitOr       = 0x71,

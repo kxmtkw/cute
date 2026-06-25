@@ -70,6 +70,7 @@ static const std::map<std::string, ctInstrSpec> ctInstrMap = {
 	{"and",     {instrLogicAnd,{ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
     {"or",      {instrLogicOr, {ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
     {"not",     {instrLogicNot,{ctOperandType::Register, ctOperandType::Register}}},
+	{"xor",     {instrLogicXor, {ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
     {"band",    {instrBitAnd,  {ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
     {"bor",     {instrBitOr,   {ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
     {"bxor",    {instrBitXor,  {ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
