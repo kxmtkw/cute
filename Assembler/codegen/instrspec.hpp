@@ -44,7 +44,6 @@ static const std::map<std::string, ctInstrSpec> ctInstrMap = {
     {"setu",    {instrSetU,    {ctOperandType::Register, ctOperandType::UInt}}},
     {"setf",    {instrSetF,    {ctOperandType::Register, ctOperandType::Float}}},
     {"setb",    {instrSetB,    {ctOperandType::Register, ctOperandType::Bool}}},
-    {"setc",    {instrSetC,    {ctOperandType::Register, ctOperandType::Char}}},
 	{"setn",    {instrSetN,    {ctOperandType::Register}}},
 
     {"addi",    {instrAddI,    {ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
