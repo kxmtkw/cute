@@ -78,9 +78,9 @@ static const std::map<std::string, ctInstrSpec> ctInstrMap = {
     {"bshl",    {instrBitShl,  {ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
     {"bshr",    {instrBitShr,  {ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
 
-    {"cmpi",    {instrCmpI,    {ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
-    {"cmpu",    {instrCmpU,    {ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
-    {"cmpf",    {instrCmpF,    {ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
+    {"cmpi",    {instrCmpI,    {ctOperandType::Register, ctOperandType::Register}}},
+    {"cmpu",    {instrCmpU,    {ctOperandType::Register, ctOperandType::Register}}},
+    {"cmpf",    {instrCmpF,    {ctOperandType::Register, ctOperandType::Register}}},
     {"eq",      {instrEq,      {ctOperandType::Register}}},
     {"neq",     {instrNotEq,   {ctOperandType::Register}}},
     {"less",    {instrLess,    {ctOperandType::Register}}},
@@ -97,13 +97,15 @@ static const std::map<std::string, ctInstrSpec> ctInstrMap = {
     {"call",    {instrCall,    {ctOperandType::Register}}},
     {"ret",     {instrReturn,  {}}},
 
-    {"connew",  {instrConNew,  {ctOperandType::Register, ctOperandType::Register}}},
-    {"condel",  {instrConDel,  {ctOperandType::Register}}},
-    {"conget",  {instrConGet,  {ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
-    {"conset",  {instrConSet,  {ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
-    {"conclone",{instrConClone,{ctOperandType::Register, ctOperandType::Register}}},
+    {"connew",   {instrConNew,  {ctOperandType::Register, ctOperandType::Register}}},
+    {"condel",   {instrConDel,  {ctOperandType::Register}}},
+    {"conget",   {instrConGet,  {ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
+    {"conset",   {instrConSet,  {ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
     {"conresize",{instrConResize,{ctOperandType::Register, ctOperandType::Register}}},
-    {"conlen",  {instrConLen,  {ctOperandType::Register, ctOperandType::Register}}}
+    {"conlen",   {instrConLen,  {ctOperandType::Register, ctOperandType::Register}}},
+	{"concopy",  {instrConCopy,{ctOperandType::Register, ctOperandType::Register}}},
+	{"conclone", {instrConClone,{ctOperandType::Register, ctOperandType::Register}}},
+
 };
 
 #endif // CODEGEN_INSTRSPEC_HPP
