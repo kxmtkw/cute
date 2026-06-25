@@ -8,9 +8,11 @@ typedef enum {
 
 	instrHalt    = 0x00,
 	instrNull    = 0x01,
+	instrAssert  = 0x02,
 
 	instrOut     = 0x10,
-	instrTypeof  = 0x11,
+	instrOutBits = 0x11,
+	instrTypeof  = 0x12,
 	
 	instrMov     = 0x20,
 	instrLoad    = 0x21,

@@ -34,8 +34,12 @@ static const std::map<std::string, ctInstrSpec> ctInstrMap = {
 
 	{"halt",    {instrHalt,    {ctOperandType::Register}}},
     {"null",    {instrNull,    {}}},
+	{"assert",  {instrAssert,  {ctOperandType::Register}}},
+
     {"out",     {instrOut,     {ctOperandType::Register}}},
+	{"outb",    {instrOutBits, {ctOperandType::Register}}},
     {"typeof",  {instrTypeof,  {ctOperandType::Register, ctOperandType::Register}}},
+
 	{"mov",     {instrMov,     {ctOperandType::Register, ctOperandType::Register}}},
 	{"load",    {instrLoad,    {ctOperandType::Register, ctOperandType::Slot}}},
     {"store",   {instrStore,   {ctOperandType::Slot, ctOperandType::Register}}},

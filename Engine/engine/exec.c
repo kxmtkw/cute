@@ -163,9 +163,29 @@ ct_ctx_exec(ctContext* ctx)
 		case instrNull:
 			continue;
 
+		case instrAssert:
+			r1 = instrs[ctx->ip++];
+			if (ctx->registers.types[r1] == ctAtomType_NoneType || !ctx->registers.atoms[r1].raw) {
+				ct_ctx_throwError(
+					ctx,
+					ct_error_make(ctErrorCode_AssertionFailed, "Assertion Failed.")
+				);
+			};
+			break;
+
 		case instrOut:
 			r1 = instrs[ctx->ip++];
 			out(ctx->registers.atoms[r1], ctx->registers.types[r1]);
+			break;
+
+		case instrOutBits:
+			r1 = instrs[ctx->ip++];
+			u = ctx->registers.atoms[r1].raw;
+			for (int i = 63; i >= 0; i--) {
+				printf("%d", (int)((u >> i) & 1));
+				if (i % 8 == 0 && i != 0) printf(" ");
+			}
+			printf(" [ 0x%016llX ]\n", (unsigned long long)u);
 			break;
 
 		case instrTypeof:

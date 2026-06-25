@@ -67,15 +67,16 @@ ct_ctx_del(ctContext* ctx);
 void
 ct_ctx_callProcedure(ctContext* ctx, uint32_t procedure_id);
 
+// Return from the last called procedure.
+void
+ct_ctx_returnProcedure(ctContext* ctx);
+
 ctTypedAtom
 ct_ctx_loadAtom(ctContext* ctx, uint32_t i);
 
 void
 ct_ctx_storeAtom(ctContext* ctx, uint32_t i, ctTypedAtom atom);
 
-// Return from the last called procedure.
-void
-ct_ctx_returnProcedure(ctContext* ctx);
 
 void
 ct_ctx_throwError(ctContext* ctx, ctError error);
