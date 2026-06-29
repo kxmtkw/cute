@@ -7,8 +7,6 @@ std::unique_ptr<ctProgramNode> ctParser::parse(ctTokenStream& stream) {
 	auto program = std::make_unique<ctProgramNode>();
 
 	while (mStream->peek().type != ctTokenType::EndOfFile) {
-		ctToken tok = stream.peek();
-
 		auto proc = parseProcedure();
 		if (proc) {
 			program->procedures.push_back(std::move(proc));
@@ -27,12 +25,12 @@ std::unique_ptr<ctProcedureNode> ctParser::parseProcedure() {
 
 
 	std::string id_str;
-	if (!mStream->expectTokenType(ctTokenType::Int, id_str)) {
+	if (!mStream->expectTokenType(ctTokenType::Word, id_str)) {
 		return nullptr;
 	}
 
 	auto proc = std::make_unique<ctProcedureNode>();
-	proc->id = std::stoul(id_str);
+	proc->name = id_str;
 
 	if (!mStream->expectToken("[")) {
 		return nullptr;

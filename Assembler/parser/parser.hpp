@@ -1,7 +1,7 @@
 #ifndef PARSER_PARSER_HPP
 #define PARSER_PARSER_HPP
 
-#include "nodes.hpp"
+#include "nodes/nodes.hpp"
 #include "tokenizer/tokens.hpp"
 #include <memory>
 

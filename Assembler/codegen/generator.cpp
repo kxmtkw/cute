@@ -2,7 +2,7 @@
 #include <memory>
 #include <format>
 
-#include "parser/nodes.hpp"
+#include "nodes/nodes.hpp"
 #include "generator.hpp"
 #include "instrspec.hpp"
 #include "utils/utils.hpp"
@@ -22,8 +22,9 @@ void ctCodeGenerator::visit(ctProgramNode& node) {
 
 
 void ctCodeGenerator::visit(ctProcedureNode& node) {
+
 	ctImageProcedure image_procedure;
-	image_procedure.id = node.id;
+	image_procedure.id = node.assigned_id;
 	image_procedure.bytecode_index = mInstrPool.size();
 	image_procedure.locals_count = 4;
 	
@@ -34,6 +35,14 @@ void ctCodeGenerator::visit(ctProcedureNode& node) {
 	mProcedures.push_back(image_procedure);
 };
 
+
+void ctCodeGenerator::visit(ctStationNode& node) {
+
+};
+
+void ctCodeGenerator::visit(ctWordNode& node) {
+
+};
 
 void ctCodeGenerator::visit(ctOperationNode& node) {
 	
@@ -50,8 +59,6 @@ void ctCodeGenerator::visit(ctOperationNode& node) {
 	}
 };
 
-
-void ctCodeGenerator::visit(ctWordNode& node) {}
 
 void ctCodeGenerator::visit(ctRegisterNode& node) {
 	
