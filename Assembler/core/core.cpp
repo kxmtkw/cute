@@ -27,7 +27,7 @@ void ctAssemblerCore::assembleString(const std::string& source) {
 	ctNodePrinter printer;
 	program->accept(printer);
 	
-	mResolver.resolve(*program);
+	//mResolver.resolve(*program);
 
 	if (mErrors.hasError()) {
 		std::cerr << mErrors.getErrors();

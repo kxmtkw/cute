@@ -26,7 +26,6 @@ void ctCodeGenerator::visit(ctProcedureNode& node) {
 	ctImageProcedure image_procedure;
 	image_procedure.id = node.assigned_id;
 	image_procedure.bytecode_index = mInstrPool.size();
-	image_procedure.locals_count = 4;
 	
 	for (auto& op: node.operations) {
 		op->accept(*this);
@@ -59,15 +58,6 @@ void ctCodeGenerator::visit(ctOperationNode& node) {
 	}
 };
 
-
-void ctCodeGenerator::visit(ctRegisterNode& node) {
-	
-	uint32_t out;
-	ctUtils::isRegister(node.val, out);
-	uint8_t register_val = out;
-
-	mInstrPool.push_back(register_val);
-};
 
 void ctCodeGenerator::visit(ctSlotNode& node) {
 	

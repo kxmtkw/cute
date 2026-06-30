@@ -55,18 +55,6 @@ namespace  ctUtils {
 	}
 
 
-	bool isRegister(std::string& str, uint32_t& outValue) {
-
-		if (str.size() < 2 || str[0] != 'r') return false;
-		
-		std::string numberPart = str.substr(1);
-		
-		if (ctUtils::stringToUInt(numberPart, outValue)) {
-			return outValue < 256;
-		}
-		return false;
-	}
-	
 	bool isSlot(std::string& str, uint32_t& outValue) {
 
 		if (str.size() < 2 || str[0] != 's') return false;

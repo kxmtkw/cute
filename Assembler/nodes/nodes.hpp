@@ -19,7 +19,6 @@ struct ctOperationNode;
 struct ctOperandNode;
 
 struct ctWordNode;
-struct ctRegisterNode;
 struct ctSlotNode;
 struct ctLiteralNode;
 
@@ -32,7 +31,6 @@ enum class NodeType {
 	Station,
     Operation,
     Word,
-    Register,
     Slot,
     Int,
     Float
@@ -49,7 +47,6 @@ public:
     virtual void visit(ctOperationNode& node) = 0;
 
 	virtual void visit(ctWordNode& node) = 0;
-	virtual void visit(ctRegisterNode& node) = 0;
     virtual void visit(ctSlotNode& node) = 0;
 
 	virtual void visit(ctIntNode& node) = 0;
@@ -100,12 +97,6 @@ struct ctOperandNode : public ctNode {
     virtual void accept(ctNodeVisitor& visitor) override = 0;
 };
 
-struct ctRegisterNode : public ctOperandNode {
-    std::string val;
-
-    void accept(ctNodeVisitor& visitor) override { visitor.visit(*this); }
-    NodeType getType() const override { return NodeType::Register; }
-};
 
 struct ctSlotNode : public ctOperandNode {
     std::string val;
@@ -170,10 +161,6 @@ public:
 		}
 	}
 
-
-	void visit(ctRegisterNode& node) override {
-		std::cout << "Reg: " << node.val;
-	}
 
 	void visit(ctSlotNode& node) override {
 		std::cout << "Slot: " << node.val;

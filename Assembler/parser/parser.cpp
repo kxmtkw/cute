@@ -25,12 +25,13 @@ std::unique_ptr<ctProcedureNode> ctParser::parseProcedure() {
 
 
 	std::string id_str;
-	if (!mStream->expectTokenType(ctTokenType::Word, id_str)) {
+	if (!mStream->expectTokenType(ctTokenType::Int, id_str)) {
 		return nullptr;
 	}
 
 	auto proc = std::make_unique<ctProcedureNode>();
 	proc->name = id_str;
+	proc->assigned_id = std::stoll(id_str);
 
 	if (!mStream->expectToken("[")) {
 		return nullptr;
@@ -97,12 +98,7 @@ std::unique_ptr<ctOperationNode> ctParser::parseOperation() {
 		} else if (token.type == ctTokenType::Word) {
 			std::string val = mStream->getValue(token);
 
-			if (val.empty() == false && val[0] == 'r') {
-				auto node = std::make_unique<ctRegisterNode>();
-				node->val = val;
-				operand = std::move(node);
-
-			} else if (val.empty() == false && val[0] == 's') {
+			if (val.empty() == false && val[0] == 's') {
 				auto node = std::make_unique<ctSlotNode>();
 				node->val = val;
 				operand = std::move(node);

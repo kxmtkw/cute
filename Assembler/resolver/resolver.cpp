@@ -56,9 +56,6 @@ void ctNameResolver::visit(ctWordNode& node) {
 }
 
 
-void ctNameResolver::visit(ctRegisterNode& node) {
-}
-
 
 void ctNameResolver::visit(ctSlotNode& node) {
 }

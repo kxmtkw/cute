@@ -33,7 +33,6 @@ public:
 	void visit(ctStationNode& node) override;
 	void visit(ctOperationNode& node) override;
 	void visit(ctWordNode& node) override;
-	void visit(ctRegisterNode& node) override;
 	void visit(ctSlotNode& node) override;
 	void visit(ctIntNode& node) override;
 	void visit(ctFloatNode& node) override;
