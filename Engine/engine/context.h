@@ -13,45 +13,40 @@
 
 
 typedef struct {
-	uint64_t        size;
-	ctAtom*         atoms;
-	ctAtomTypeSize* types;
+	ctAtom         atoms[CUTE_CONF_SLOT_COUNT];
+	ctAtomTypeSize types[CUTE_CONF_SLOT_COUNT];
 } ctAtomFile;
 
 
-typedef struct {
-	ctAtom         atoms[CUTE_CONF_REGISTER_COUNT];
-	ctAtomTypeSize types[CUTE_CONF_REGISTER_COUNT];
-} ctRegisterFile;
-
 
 typedef struct {
-	uint64_t    procedure_id;
-	uint64_t    return_ip;
-	ctAtomFile  locals;
+	uint32_t            procedure_id;
+	uint64_t            return_ip;
+	uint8_t             args_count;
+	uint8_t             return_value_slot;
+	ctAtomFile          file;
 } ctCallFrame;
 
 
 typedef struct {
+	ctAtomFile   file;
 	ctCallFrame  frames[CUTE_CONF_CALLSTACK_SIZE];
-	uint64_t     size;
-	uint64_t     capacity;
+	uint32_t     size;
+	uint32_t     capacity;
 } ctCallStack;
 
 
-
 typedef struct {
-	ctImage*       image;
+	ctImage*            image;
 	ctContainerManager* containers;
-	uint64_t       ip;
-	ctRegisterFile registers;
-	ctCallStack    callstack;
-	ctCallFrame*   current_frame;
-	double         cmp_diff;
-	bool           running;
-	bool           has_error;
-	ctError        error;
-	uint8_t        exit_code;
+	uint64_t            ip;
+	ctCallStack         callstack;
+	ctCallFrame*        current_frame;
+	double              cmp_diff;
+	bool                running;
+	bool                has_error;
+	ctError             error;
+	uint8_t            exit_code;
 } ctContext;
 
 
@@ -65,26 +60,27 @@ ct_ctx_del(ctContext* ctx);
 
 // Setup a callframe and allocated local variables for a procedure.
 void
-ct_ctx_callProcedure(ctContext* ctx, uint32_t procedure_id);
+ct_ctx_callProcedure(ctContext* ctx, uint32_t procedure_id, uint32_t arg_count, uint8_t arg_start_slot, uint8_t return_slot);
 
 // Return from the last called procedure.
 void
-ct_ctx_returnProcedure(ctContext* ctx);
+ct_ctx_returnProcedure(ctContext* ctx, ctAtom returned_atom, ctAtomType returned_atom_type);
 
-ctTypedAtom
-ct_ctx_loadAtom(ctContext* ctx, uint32_t i);
-
+// Store an atom in the current call frame
 void
-ct_ctx_storeAtom(ctContext* ctx, uint32_t i, ctTypedAtom atom);
+ct_ctx_storeAtom(ctContext* ctx, uint8_t slot, ctAtom atom, ctAtomType type);
 
+// Load an atom from the current call frame
+void
+ct_ctx_loadAtom(ctContext* ctx, uint8_t slot, ctAtom* atom, ctAtomType* type);
 
+// Move an atom within the callframe
+void
+ct_ctx_moveAtom(ctContext* ctx, uint8_t src_slot, uint8_t dest_slot);
+
+// Throw an internal error
 void
 ct_ctx_throwError(ctContext* ctx, ctError error);
-
-
-// Executes a context, the heart of the engine.
-void
-ct_ctx_exec(ctContext* ctx);
 
 
 

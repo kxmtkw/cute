@@ -5,8 +5,7 @@ Each instruction has the following format:
 ```
 instruction [destination] [operands]
 ```
-Instructions are divided into different categories.
-The prefix `rx` will represent any register, `sx` will represent any slot. `lb` is used for literal bytes, i.e. for ints, uints, floats in the bytecode.
+`sx` will represent the slots of a procedure. `lb` is used for literal bytes, i.e. for ints, uints, floats in the bytecode.
 
 In total, there are `66` instructions.
 
@@ -15,34 +14,34 @@ In total, there are `66` instructions.
 
 These are used to control and manipulate the engine and get debug reports etc.
 
-#### Halt `0x00`
-Causes the engine to halt. Ends all contexts. Nuclear option really.
-```
-halt rx
-```
-
-#### Null `0x01`
+#### Null `0x00`
 Does nothing. Can be used as a safe placeholder, if writing a compiler.
 ```
 null
 ```
 
+#### Halt `0x01`
+Causes the engine to halt.
+```
+halt sx
+```
+
 #### Assert `0x02`
 Asserts whether a condition is true.
 ```
-assert rx
+assert sx
 ```
 
 #### Out `0x10`
 Used to display the type and data held by an atom.
 ```
-out rx
+out sx
 ```
 
 #### BitOut `0x11`
 Dumps the bits and hex form of an atom
 ```
-bitout rx
+bitout sx
 ```
 
 
@@ -53,61 +52,37 @@ These instructions are used to transfer data.
 #### Mov `0x20`
 Moves (or rather copies) data from one atom to another.
 ```
-mov rx ry
+mov sx sy
 ```
 
-#### Load `0x21`
-Loads an atom from a slot to a register.
-```
-load rx sx
-```
-
-#### Store `0x22`
-Stores an atom from a register to a slot.
-```
-store sx rx
-```
-
-#### LoadG `0x23`
-Loads an atom from a global slot to a register.
-```
-loadg rx sx
-```
-
-#### StoreG `0x24`
-Stores an atom from a register to a global slot.
-```
-storeg sx rx
-```
-
-#### SetI `0x25`
+#### SetI `0x21`
 Sets an `int` atom to a register.
 ```
-seti rx lb
+seti sx lb
 ```
 
-#### SetU `0x26`
+#### SetU `0x22`
 Sets an `uint` atom to a register.
 ```
-setu rx lb
+setu sx lb
 ```
 
-#### SetF `0x27`
+#### SetF `0x23`
 Sets a `float` atom to a register.
 ```
-setf rx lb
+setf sx lb
 ```
 
-#### SetB `0x28`
+#### SetB `0x24`
 Sets an `bool` atom to a register.
 ```
-setb rx lb
+setb sx lb
 ```
 
-#### SetN `0x29`
+#### SetN `0x25`
 Sets an `none` atom to a register.
 ```
-setu rx
+setu sx
 ```
 
 ### Arithmetic
@@ -147,13 +122,13 @@ setu rx
 All of these are self-explantory.
 - The binary operations have the format:
 ```
-opcode rx ry rz
+opcode sx sy sz
 ```
 - The unary operations have the format:
 ```
-opcode rx ry
+opcode sx sy
 ```
-Where `rx` is the dest and,`ry` and `rz` are the source registers.
+Where `sx` is the dest and,`sy` and `sz` are the source registers.
 
 All operands are registers. `src`s are type checked before the operation is performed.
 
@@ -170,13 +145,13 @@ All operands are registers. `src`s are type checked before the operation is perf
 All of these are self-explantory.
 - The binary operations have the format:
 ```
-opcode rx ry rz
+opcode sx sy sz
 ```
 - The unary operations have the format:
 ```
-opcode rx ry
+opcode sx sy
 ```
-Where `rx` is the dest and,`ry` and `rz` are the source registers.
+Where `sx` is the dest and,`sy` and `sz` are the source registers.
 
 The logic operations only work on the `bool` atom.
 
@@ -197,13 +172,13 @@ The logic operations only work on the `bool` atom.
 All of these are self-explantory.
 - The binary operations have the format:
 ```
-opcode rx ry rz
+opcode sx sy sz
 ```
 - The unary operations have the format:
 ```
-opcode rx ry
+opcode sx sy
 ```
-Where `rx` is the dest and,`ry` and `rz` are the source registers.
+Where `sx` is the dest and,`sy` and `sz` are the source registers.
 
 The logic operations only work on the `uint` atom.
 
@@ -218,7 +193,7 @@ The logic operations only work on the `uint` atom.
 All of these are self-explantory.
 - The binary operations have the format:
 ```
-cmpi/cmpu/cmpf rx ry
+cmpi/cmpu/cmpf sx sy
 ```
 
 Compares two values and sets a flag. This is usless unless you use the following cmp resolvers which turn this flag into a boolean value:
@@ -237,9 +212,9 @@ Compares two values and sets a flag. This is usless unless you use the following
 
 All of these have the format:
 ```
-opcode rx
+opcode sx
 ```
-The register `rx` holds the `bool` form of the flag as resolved from the flag.
+The register `sx` holds the `bool` form of the flag as resolved from the flag.
 
 ### Control Flow
 
@@ -255,9 +230,9 @@ jmp lb
 #### JmpIfNot `0xA2`
 Similar to `jmp` but conditional.
 ```
-jmpif/jmpifnot rx lb
+jmpif/jmpifnot sx lb
 ```
-Where rx must hold a `bool` atom.
+Where sx must hold a `bool` atom.
 
 #### JmpAbs `0xA3`
 Jump to a absolute address.
@@ -272,9 +247,9 @@ jma lb
 
 Similar to `jma` but conditional.
 ```
-jmaif/jmaifnot rx lb
+jmaif/jmaifnot sx lb
 ```
-Where rx must hold a `bool` atom.
+Where sx must hold a `bool` atom.
 
 > All jmp instructions are designed to jump anywhere in the bytecode but the assembler is so made that jumps can only be done within a procedure.
 
@@ -283,15 +258,24 @@ Where rx must hold a `bool` atom.
 #### Call `0xB0`
 Call a procedure.
 ```
-call rx
+call sx sy sz sa
 ```
-Where `rx` stores the Id of the procedure to be called. It must be a `uint`
+Where `sx` stores the Id of the procedure to be called. It must be a `uint`.
+`sy` holds the number of args where `sz` is the register from which the `sy` arguments start. `sa` is the return slot.
 
 #### Return `0xB1`
-Return from a procedure
+Return from a procedure.
+```
+ret sx
+```
+The value `sx` is written to the `sa` of the caller.
+
+#### ReturnNone `0xB2`
+Return from a procedure.
 ```
 ret
 ```
+Same as `0xB1` but automatically returns `none`.
 
 
 ### Containers
@@ -299,45 +283,45 @@ ret
 #### ConNew `0xC1`
 Make a new container with a given size.
 ```
-connew rx ry
+connew sx ry
 ```
 Where `ry` is a `uint` that holds the size of the required container.
 
 #### ConDel `0xC2`
 Delete the particular reference of the container.
 ```
-condel rx
+condel sx
 ```
-Where rx must hold a `container` atom. After deletion, `rx` holds `none`.
+Where sx must hold a `container` atom. After deletion, `sx` holds `none`.
 > This does NOT delete the container but just deletes the targeted reference and decreases the refcount.
 
 #### ConGet `0xC3`
 Get an atom from the container.
 ```
-conget rx ry rz
+conget sx ry rz
 ```
-Where `rx` is the dest register, `ry` holds the container and `rz` holds the index required. 
+Where `sx` is the dest register, `ry` holds the container and `rz` holds the index required. 
 
 #### ConSet `0xC4`
 Set an atom in a container
 ```
-conset rx ry rz
+conset sx ry rz
 ```
-Where `rx` holds the container, `ry` holds the index and `rz` holds the atom to be stored. 
+Where `sx` holds the container, `ry` holds the index and `rz` holds the atom to be stored. 
 
 #### ConLen `0xC5`
 Get the length or size of a container.
 ```
-conlen rx ry
+conlen sx ry
 ```
-Where `rx` is the dest register and `ry` holds the container.
+Where `sx` is the dest register and `ry` holds the container.
 
 #### ConResize `0xC6`
 Resize a container in-place.
 ```
-conresize rx ry
+conresize sx ry
 ```
-Where `rx` holds the container and `ry` holds the updated size.
+Where `sx` holds the container and `ry` holds the updated size.
 The runtime will:
 - Expand normally if `new_size` > `current_size`
 - Truncate atoms if `new_size` < `current_size`
@@ -347,18 +331,18 @@ The runtime will:
 #### ConCopy `0xC7`
 Create a shallow copy of a container.
 ```
-concopy rx ry
+concopy sx ry
 ```
-Where `rx` is the dest register and `ry` holds the container to be copied.
+Where `sx` is the dest register and `ry` holds the container to be copied.
 
 > Sub Containers are NOT copied, only their references are.
 
 #### ConClone `0xC8`
 Create a clone of the container. This creates an exact 1-1 replica of the container, deep copying everything inside it.
 ```
-conclone rx ry
+conclone sx ry
 ```
-Where `rx` is the dest register and `ry` holds the container to be cloned.
+Where `sx` is the dest register and `ry` holds the container to be cloned.
 
 > Sub Containers are recursively cloned.
 

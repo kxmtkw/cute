@@ -6,24 +6,19 @@
 
 typedef enum {
 
-	instrHalt    = 0x00,
-	instrNull    = 0x01,
+	instrNull    = 0x00,
+	instrHalt    = 0x01,
 	instrAssert  = 0x02,
 
 	instrOut     = 0x10,
 	instrOutBits = 0x11,
-	instrTypeof  = 0x12,
 	
 	instrMov     = 0x20,
-	instrLoad    = 0x21,
-	instrStore   = 0x22,
-	instrLoadG   = 0x23,
-	instrStoreG  = 0x24,
-	instrSetI    = 0x25,
-	instrSetU    = 0x26,
-	instrSetF    = 0x27,
-	instrSetB    = 0x28,
-	instrSetN    = 0x29,
+	instrSetI    = 0x21,
+	instrSetU    = 0x22,
+	instrSetF    = 0x23,
+	instrSetB    = 0x24,
+	instrSetN    = 0x25,
 
 	instrAddI    = 0x30,
 	instrSubI    = 0x31,
@@ -72,14 +67,13 @@ typedef enum {
 	instrJmp         = 0xA0,
 	instrJmpIf       = 0xA1,
 	instrJmpIfNot    = 0xA2,
-
 	instrJmpAbs          = 0xA3,
 	instrJmpAbsIf        = 0xA4,
 	instrJmpAbsIfNot     = 0xA5,
 
 	instrCall        = 0xB0,
 	instrReturn      = 0xB1,
-	instrModCall     = 0xB2,
+	instrReturnN     = 0xB2,
 
 	instrConNew     = 0xC1,
 	instrConDel     = 0xC2,
@@ -109,7 +103,6 @@ typedef struct {
 typedef struct {
 	uint32_t id;
 	uint32_t bytecode_index;
-	uint32_t locals_count;
 } ctImageProcedure;
 
 
@@ -140,8 +133,5 @@ ct_image_read(ctImage *img, const char *filepath);
 void 
 ct_image_free(ctImage *img);
 
-// Print the image for debugging
-void 
-ct_image_print(const ctImage* img);
 
 #endif // CUTE_INSTR_H

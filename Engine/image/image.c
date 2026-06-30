@@ -71,23 +71,3 @@ ct_image_read(ctImage *img, const char *filepath) {
 	fclose(fp);
 	return ctImageCode_Success;
 };
-
-
-void ct_image_print(const ctImage* img) {
-	printf("=== ctImage ===\n");
-	printf("magic:       0x%08X\n", img->header.magic_id);
-	printf("proc count:  %u\n",   img->header.procedure_count);
-	printf("instr count: %u\n",   img->header.instruction_count);
-
-	printf("\n--- Procedures ---\n");
-	for (uint64_t i = 0; i < img->header.procedure_count; i++) {
-		ctImageProcedure* p = &img->procedure_table[i];
-		printf("  [%lu] id=%u bytecode_index=%u locals=%u\n",
-			i, p->id, p->bytecode_index, p->locals_count);
-	}
-
-	printf("\n--- Instructions ---\n");
-	for (uint64_t i = 0; i < img->header.instruction_count; i++) {
-		printf("  [%04lu] 0x%02X %d\n", i, img->instruction_pool[i], img->instruction_pool[i]);
-	}
-}

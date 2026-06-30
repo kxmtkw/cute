@@ -9,7 +9,8 @@
 
 #include "containers/container.h"
 #include "context.h"
-#include "engine/error.h"
+#include "exec.h"
+#include "error.h"
 
 
 void
@@ -75,7 +76,7 @@ ct_engine_loadFile(ctEngine* engine, const char* filepath) {
 void
 ct_engine_run(ctEngine* engine) {
 	engine->ctx = ct_ctx_new(&engine->image, &engine->manager, 0);
-	ct_ctx_exec(engine->ctx);
+	ct_exec(engine->ctx);
 	
 	if (engine->ctx->has_error) {
 		ct_error_print(engine->ctx->error);

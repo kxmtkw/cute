@@ -14,64 +14,39 @@
 #include "context.h"
 
 
-static ctAtomFile
-ct_ctx_allocAtomFile(uint32_t count) {
-	if (count == 0) return (ctAtomFile){0, NULL, NULL};
-
-	ctAtomFile file;
-	file.size = count;
-	
-	uint8_t* memory = malloc(sizeof(ctAtom) * count + sizeof(ctAtomTypeSize) * count);
-	file.atoms = (ctAtom*)memory;
-	file.types = (ctAtomTypeSize*)(memory + sizeof(ctAtom) * count);
-	return file;
-}
 
 
-static void
-ct_ctx_freeAtomFile(ctAtomFile* file) {
-	if (file->size != 0) {
-		free(file->atoms);
-	}
-}
+// Call Stack helpers
 
-
-static void
+static inline void
 ct_ctx_initStack(ctCallStack* s) {
     s->size     = 0;
     s->capacity = CUTE_CONF_CALLSTACK_SIZE;
 }
 
-
-static void 
+static inline void 
 ct_ctx_delStack(ctCallStack* s) {
-
-	for (uint32_t i = 0; i < s->size; i++) {
-		ct_ctx_freeAtomFile(&s->frames[i].locals);
-	};
-
     s->size    = 0;
     s->capacity = 0;
 }
 
-
-static void
+static inline void
 ct_ctx_pushFrame(ctCallStack* s, ctCallFrame frame) {		
     s->frames[s->size++] = frame;
 }
 
-
-static ctCallFrame 
+static inline ctCallFrame 
 ct_ctx_popFrame(ctCallStack* s) {
     return s->frames[--s->size];
 }
 
-
-static ctCallFrame* 
+static inline ctCallFrame* 
 ct_ctx_peekFrame(ctCallStack* s) {
     return &s->frames[s->size-1];
 }
 
+
+// Context methods
 
 ctContext*
 ct_ctx_new(ctImage* img, ctContainerManager* containers, uint32_t procedure_id) {
@@ -82,7 +57,7 @@ ct_ctx_new(ctImage* img, ctContainerManager* containers, uint32_t procedure_id) 
 	ctx->current_frame = NULL;
 	ctx->has_error = false;
 	ct_ctx_initStack(&ctx->callstack);
-	ct_ctx_callProcedure(ctx, procedure_id);
+	ct_ctx_callProcedure(ctx, procedure_id, 0, 0, 0);
 	return ctx;
 }
 
@@ -94,7 +69,7 @@ ct_ctx_del(ctContext* ctx) {
 
 
 void
-ct_ctx_callProcedure(ctContext* ctx, uint32_t procedure_id) {
+ct_ctx_callProcedure(ctContext* ctx, uint32_t procedure_id, uint32_t arg_count, uint8_t arg_start_slot, uint8_t return_slot) {
 
 	if (ctx->callstack.size >= ctx->callstack.capacity) {
 		ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_RecursionDepth, "Max recursion depth reached."));
@@ -102,88 +77,86 @@ ct_ctx_callProcedure(ctContext* ctx, uint32_t procedure_id) {
 	};
 
 	if (procedure_id >= ctx->image->header.procedure_count) {
-		ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_ProcedureError, "Invalid procedure id called."));
+		ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_ProcedureError, "Invalid procedure ID called."));
 		return;
 	}
 
 	ctCallFrame frame;
 	frame.procedure_id = procedure_id;
-	uint32_t locals_count = ctx->image->procedure_table[procedure_id].locals_count;
-
-	if (locals_count > CUTE_CONF_LOCALS_LIMIT) {
-		ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_ProcedureError, "Too many locals allocated for procedure."));
-		return;
-	}
-
-	frame.locals = ct_ctx_allocAtomFile(locals_count);
 	frame.return_ip = ctx->ip;
-	ct_ctx_pushFrame(&ctx->callstack, frame);
+	frame.return_value_slot = return_slot;
+	frame.args_count = arg_count;
+	memset(frame.file.types, 0, CUTE_CONF_SLOT_COUNT);
 
+	for (size_t i = arg_start_slot; i < arg_start_slot + arg_count; i++) {
+		frame.file.atoms[i] = ctx->current_frame->file.atoms[i];
+		frame.file.types[i] = ctx->current_frame->file.types[i];
+	};
+	
+	ct_ctx_pushFrame(&ctx->callstack, frame);
 
 	ctx->ip = ctx->image->procedure_table[procedure_id].bytecode_index;
 	ctx->current_frame = ct_ctx_peekFrame(&ctx->callstack);
 
-	CUTE_LOG("context", "Called procedure(%u) with locals(%u)\n", procedure_id, locals_count);
+	CUTE_LOG(
+		"context", 
+		"Called procedure(%u) with %u arguments passed from previous frame's slot %d\n", 
+		procedure_id, arg_count, arg_start_slot
+	);
 }
 
 
 void
-ct_ctx_returnProcedure(ctContext* ctx) {
+ct_ctx_returnProcedure(ctContext* ctx, ctAtom returned_atom, ctAtomType returned_atom_type) {
 
 	ctCallFrame frame = ct_ctx_popFrame(&ctx->callstack);
-	ct_ctx_freeAtomFile(&frame.locals);
-
-	ctx->ip = frame.return_ip;
 	ctx->current_frame = ct_ctx_peekFrame(&ctx->callstack);
+	ctx->ip = frame.return_ip;
+	ct_ctx_storeAtom(ctx, frame.return_value_slot, returned_atom, returned_atom_type);
+
+	CUTE_LOG("context", "Returned from procedure(%u) with return value: %s\n", frame.procedure_id, ct_atom_stringforms[returned_atom_type]);
 }
 
+inline void
+ct_ctx_storeAtom(ctContext* ctx, uint8_t slot, ctAtom atom, ctAtomType type) {
 
-ctTypedAtom
-ct_ctx_loadAtom(ctContext* ctx, uint32_t i) {
+	if (ctx->current_frame->file.types[slot] == ctAtomType_Container) {
+		ct_containers_decRef(ctx->containers, ctx->current_frame->file.atoms[slot].as_container);
+	};
 
-	ctCallFrame* frame = ctx->current_frame;
+	ctx->current_frame->file.atoms[slot] = atom;
+	ctx->current_frame->file.types[slot] = type;
 
-	if (i >= frame->locals.size) {
-		ct_ctx_throwError(
-			ctx, 
-			ct_error_make(ctErrorCode_OutOfBounds, "Tried to load an atom beyond the local count.")
-		);
-		return (ctTypedAtom){ctAtomType_NoneType, {0}};
-	}
-
-	ctTypedAtom typed;
-	typed.atom = frame->locals.atoms[i];
-	typed.type = frame->locals.types[i];
-	return typed;
-}
-
-void
-ct_ctx_storeAtom(ctContext* ctx, uint32_t i, ctTypedAtom typed) {
-
-	ctCallFrame* frame = ctx->current_frame;
-
-	if (i >= frame->locals.size) {
-		ct_ctx_throwError(
-			ctx, 
-			ct_error_make(ctErrorCode_OutOfBounds, "Tried to store an atom beyond the local count.")
-		);
-		return;
-	}
-
-	if (frame->locals.types[i] == ctAtomType_Container) {
-		ct_containers_decRef(ctx->containers, frame->locals.atoms[i].as_container);
-	}
-
-	frame->locals.atoms[i] = typed.atom;
-	frame->locals.types[i] = typed.type;
-
-	if (frame->locals.types[i] == ctAtomType_Container) {
-		ct_containers_incRef(ctx->containers, frame->locals.atoms[i].as_container);
-	}
-}
+	if (type == ctAtomType_Container) {
+		ct_containers_incRef(ctx->containers, atom.as_container);
+	};
+};
 
 
-void
+inline void
+ct_ctx_loadAtom(ctContext* ctx, uint8_t slot, ctAtom* atom, ctAtomType* type) {
+	*atom = ctx->current_frame->file.atoms[slot];
+	*type = ctx->current_frame->file.types[slot];
+};
+
+
+inline void
+ct_ctx_moveAtom(ctContext* ctx, uint8_t src_slot, uint8_t dest_slot) {
+
+	if (ctx->current_frame->file.types[dest_slot] == ctAtomType_Container) {
+		ct_containers_decRef(ctx->containers, ctx->current_frame->file.atoms[dest_slot].as_container);
+	};
+
+	ctx->current_frame->file.atoms[dest_slot] = ctx->current_frame->file.atoms[src_slot];
+	ctx->current_frame->file.types[dest_slot] = ctx->current_frame->file.types[src_slot];
+
+	if (ctx->current_frame->file.types[src_slot] == ctAtomType_Container) {
+		ct_containers_incRef(ctx->containers, ctx->current_frame->file.atoms[src_slot].as_container);
+	};
+};
+
+
+inline void
 ct_ctx_throwError(ctContext* ctx, ctError error) {
 	ctx->running = false;
 	ctx->has_error = true;
