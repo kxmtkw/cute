@@ -95,8 +95,10 @@ static const std::map<std::string, ctInstrSpec> ctInstrMap = {
     {"jma",     {instrJmpAbs,  {ctOperandType::UInt}}},
     {"jmaif",   {instrJmpAbsIf,{ctOperandType::Register, ctOperandType::UInt}}},
     {"jmaifnot",{instrJmpAbsIfNot,{ctOperandType::Register, ctOperandType::UInt}}},
-    {"call",    {instrCall,    {ctOperandType::Register}}},
+    {"call",    {instrCall,    {ctOperandType::Register, ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
+	{"callstatic",{instrCallStatic,{ctOperandType::UInt, ctOperandType::Register, ctOperandType::Register, ctOperandType::Register}}},
     {"ret",     {instrReturn,  {}}},
+	{"retval",  {instrReturnVal,{ctOperandType::Register}}},
 
     {"connew",   {instrConNew,  {ctOperandType::Register, ctOperandType::Register}}},
     {"condel",   {instrConDel,  {ctOperandType::Register}}},

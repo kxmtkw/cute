@@ -69,7 +69,7 @@ ct_ctx_del(ctContext* ctx) {
 
 
 void
-ct_ctx_callProcedure(ctContext* ctx, uint32_t procedure_id, uint32_t arg_count, uint8_t arg_start_slot, uint8_t return_slot) {
+ct_ctx_callProcedure(ctContext* ctx, uint32_t procedure_id, uint8_t arg_count, uint8_t arg_start_slot, uint8_t return_slot) {
 
 	if (ctx->callstack.size >= ctx->callstack.capacity) {
 		ct_ctx_throwError(ctx, ct_error_make(ctErrorCode_RecursionDepth, "Max recursion depth reached."));

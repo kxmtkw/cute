@@ -60,7 +60,7 @@ ct_ctx_del(ctContext* ctx);
 
 // Setup a callframe and allocated local variables for a procedure.
 void
-ct_ctx_callProcedure(ctContext* ctx, uint32_t procedure_id, uint32_t arg_count, uint8_t arg_start_slot, uint8_t return_slot);
+ct_ctx_callProcedure(ctContext* ctx, uint32_t procedure_id, uint8_t arg_count, uint8_t arg_start_slot, uint8_t return_slot);
 
 // Return from the last called procedure.
 void

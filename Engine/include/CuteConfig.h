@@ -7,7 +7,7 @@
 #define CUTE_CONF_SLOT_COUNT 256
 
 
-#define CUTE_CONF_DEBUG
+//#define CUTE_CONF_DEBUG
 
 #ifdef CUTE_CONF_DEBUG
 
