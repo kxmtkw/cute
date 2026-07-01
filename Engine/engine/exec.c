@@ -38,7 +38,7 @@ r1 = instrs[ctx->ip++]; \
 r2 = instrs[ctx->ip++]; \
 ct_ctx_loadAtom(ctx, r1, &a1, &t1); \
 ct_ctx_loadAtom(ctx, r2, &a2, &t2); \
-ctx->cmp_diff = a1.FIELD - a2.FIELD; 
+ctx->cmp_diff = (double)a1.FIELD - (double)a2.FIELD; 
 
 
 #define INSTR_CMP_RESOLVER(OP) \
@@ -424,7 +424,6 @@ ct_exec(ctContext* ctx) {
 		case instrConDel:
 			r1 = instrs[ctx->ip++];
 			ct_ctx_loadAtom(ctx, r1, &a1, &t1);
-			ct_containers_decRef(ctx->containers, a1.as_container);
 			ct_ctx_storeAtom(ctx, r1, (ctAtom){.as_uint=0}, ctAtomType_NoneType);
 			break;
 

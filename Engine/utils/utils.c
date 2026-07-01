@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "utils.h"
+
 int ct_utils_format(char* buffer, size_t size, const char* format, ...) {
     if (!buffer || size == 0 || !format) return 0;
 
@@ -10,4 +12,16 @@ int ct_utils_format(char* buffer, size_t size, const char* format, ...) {
     va_end(args);
 
     return written;
+}
+
+bool ct_utils_isBitSet(uint64_t value, int n) {
+    return (value & (1ULL << n)) != 0;
+}
+
+void ct_utils_setBit(uint64_t *value, int n) {
+    *value |= (1ULL << n);
+}
+
+void ct_utils_clearBit(uint64_t *value, int n) {
+    *value &= ~(1ULL << n);
 }
