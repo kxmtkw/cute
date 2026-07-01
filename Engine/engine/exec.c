@@ -379,7 +379,7 @@ ct_exec(ctContext* ctx) {
 		case instrJmpAbsIfNot:
 			r1 = instrs[ctx->ip++];
 			ct_ctx_loadAtom(ctx, r1, &a1, &t1);
-			if (a1.as_bool) {
+			if (!a1.as_bool) {
 				INSTR_JMPABS();
 				continue;
 			}

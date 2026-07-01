@@ -9,9 +9,6 @@
 
 #define CUTE_CONF_DEBUG
 
-
-
-
 #ifdef CUTE_CONF_DEBUG
 
 #define CUTE_CONF_LOG_FILTER(DOMAIN) true
@@ -29,6 +26,5 @@
 #define CUTE_LOG(DOMAIN, ...) do {} while (0)
 
 #endif // CUTE_CONF_DEBUG
-
 
 #endif // CUTE_CONFIG_H
