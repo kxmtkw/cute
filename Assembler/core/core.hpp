@@ -6,6 +6,7 @@
 #include "resolver/resolver.hpp"
 #include "codegen/generator.hpp"
 
+
 class ctAssemblerCore {
 
 	ctUtils::ctErrorCollector mErrors;
@@ -14,7 +15,6 @@ class ctAssemblerCore {
 	ctParser mParser;
 	ctNameResolver mResolver;
 	ctCodeGenerator mCodegen;
-
 
 public:
 

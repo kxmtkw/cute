@@ -35,10 +35,6 @@ void ctCodeGenerator::visit(ctProcedureNode& node) {
 };
 
 
-void ctCodeGenerator::visit(ctStationNode& node) {
-
-};
-
 void ctCodeGenerator::visit(ctWordNode& node) {
 
 };

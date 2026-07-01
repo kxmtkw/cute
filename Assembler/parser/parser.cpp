@@ -1,6 +1,9 @@
 #include "parser.hpp"
+#include "nodes/nodes.hpp"
 #include "tokenizer/tokens.hpp"
+#include <memory>
 #include <string>
+
 
 std::unique_ptr<ctProgramNode> ctParser::parse(ctTokenStream& stream) {
 	mStream = &stream;
@@ -37,8 +40,10 @@ std::unique_ptr<ctProcedureNode> ctParser::parseProcedure() {
 		return nullptr;
 	}
 
-	while (mStream->peek().type != ctTokenType::EndOfFile && mStream->peek().type != ctTokenType::Symbol) {
+	while (mStream->peek().type != ctTokenType::EndOfFile) {
 		ctToken token = mStream->peek();
+		std::cout << mStream->getValue(token) << "\n";
+
 		if (token.type == ctTokenType::Symbol && mStream->getValue(token) == "]") {
 			break;
 		}
@@ -55,6 +60,7 @@ std::unique_ptr<ctProcedureNode> ctParser::parseProcedure() {
 
 	return proc;
 }
+
 
 std::unique_ptr<ctOperationNode> ctParser::parseOperation() {
 
@@ -80,6 +86,7 @@ std::unique_ptr<ctOperationNode> ctParser::parseOperation() {
 			token = mStream->peek();
 		}
 
+
 		std::unique_ptr<ctOperandNode> operand;
 		if (token.type == ctTokenType::Int) {
 			auto node = std::make_unique<ctIntNode>();
@@ -102,14 +109,17 @@ std::unique_ptr<ctOperationNode> ctParser::parseOperation() {
 				auto node = std::make_unique<ctSlotNode>();
 				node->val = val;
 				operand = std::move(node);
-
-			} else {
+			}
+			else {
 				auto node = std::make_unique<ctWordNode>();
 				node->val = val;
 				operand = std::move(node);
-
 			}
 			mStream->next();
+		} else if (mStream->expectToken("@")) {
+			auto node = std::make_unique<ctWordNode>();
+			mStream->expectTokenType(ctTokenType::Word, node->val);
+			operand = std::move(node);
 		} else {
 			mStream->next();
 		}

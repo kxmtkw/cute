@@ -20,7 +20,9 @@ void ctNameResolver::visit(ctProgramNode& node) {
 
 void ctNameResolver::visit(ctProcedureNode& node) {
 
-	if (mSymbolTable->contains(node.name)) {
+	if (!mFirstPass) return;
+
+	if (mSymbolTable->contains(node.name) && mFirstPass) { 
 		mError.accumulate(
 			std::format("Procedure '{}' already defined.", node.name)
 		);
@@ -33,7 +35,7 @@ void ctNameResolver::visit(ctProcedureNode& node) {
 	};
 
 
-	if (node.name == "main") {
+	if (node.name == "0") {
 		node.assigned_id = 0;
 	} else {
 		node.assigned_id = mProcedureCounter++;
@@ -42,9 +44,6 @@ void ctNameResolver::visit(ctProcedureNode& node) {
 	mSymbolTable->emplace(node.name, ctSymbol(ctSymbolType::Procedure, node.name, &node));
 }
 
-void ctNameResolver::visit(ctStationNode& node) {
-	
-}
 
 void ctNameResolver::visit(ctOperationNode& node) {
 
@@ -53,8 +52,19 @@ void ctNameResolver::visit(ctOperationNode& node) {
 
 void ctNameResolver::visit(ctWordNode& node) {
 
-}
+	if (mFirstPass) return;
 
+	std::cout << "TFFF" << "\n";
+
+	if (!mSymbolTable->contains(node.val)) {
+		mError.accumulate(
+			std::format("Unknown symbol '{}'", node.val)
+		);
+		return;
+	}
+
+	node.sym = &mSymbolTable->at(node.val);
+}
 
 
 void ctNameResolver::visit(ctSlotNode& node) {
@@ -70,6 +80,9 @@ void ctNameResolver::visit(ctFloatNode& node) {
 
 
 void ctNameResolver::resolve(ctProgramNode& node) {
+	mFirstPass = true;
+	node.accept(*this);
+	mFirstPass = false;
 	node.accept(*this);
 }
 

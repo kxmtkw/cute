@@ -14,6 +14,9 @@ class ctNameResolver: ctNodeVisitor {
 
 	std::map<std::string, ctSymbol>* mSymbolTable;
 	unsigned int mProcedureCounter = 1;
+	unsigned int mStationCounter = 0;
+
+	bool mFirstPass;
 	
 public:
 
@@ -22,7 +25,6 @@ public:
 	
 	void visit(ctProgramNode& node) override;
 	void visit(ctProcedureNode& node) override;
-	void visit(ctStationNode& node) override;
 	void visit(ctOperationNode& node) override;
 	void visit(ctWordNode& node) override;
 	void visit(ctSlotNode& node) override;

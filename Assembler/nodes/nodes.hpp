@@ -43,7 +43,6 @@ public:
     virtual ~ctNodeVisitor() = default;
     virtual void visit(ctProgramNode& node) = 0;
     virtual void visit(ctProcedureNode& node) = 0;
-	virtual void visit(ctStationNode& node) = 0;
     virtual void visit(ctOperationNode& node) = 0;
 
 	virtual void visit(ctWordNode& node) = 0;
@@ -71,15 +70,8 @@ struct ctProgramNode : public ctNode {
 
 struct ctProcedureNode : public ctNode {
     std::string name;
-    std::vector<std::unique_ptr<ctOperationNode>> operations;
+    std::vector<std::unique_ptr<ctNode>> operations;
 	unsigned int assigned_id;
-
-    void accept(ctNodeVisitor& visitor) override { visitor.visit(*this); }
-    NodeType getType() const override { return NodeType::Procedure; }
-};
-
-struct ctStationNode : public ctNode {
-    std::string name;
 
     void accept(ctNodeVisitor& visitor) override { visitor.visit(*this); }
     NodeType getType() const override { return NodeType::Procedure; }
@@ -148,9 +140,6 @@ public:
 		}
 	}
 
-	void visit(ctStationNode& node) override {
-		std::cout << "  Station (" << node.name << ")\n";
-	}
 
 	void visit(ctOperationNode& node) override {
 		std::cout << "    Operation [" << node.opcode << "]:\n";

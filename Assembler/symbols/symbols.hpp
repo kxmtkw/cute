@@ -6,7 +6,7 @@
 struct ctNode;
 
 enum class ctSymbolType {
-	Procedure
+	Procedure,
 };
 
 struct ctSymbol {

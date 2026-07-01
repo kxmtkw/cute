@@ -12,6 +12,7 @@
 #include <sstream>
 #include <string>
 
+
 void ctAssemblerCore::assembleString(const std::string& source) {
 
 	ctTokenStream stream = mTokenizer.tokenize(std::move(source));
@@ -27,7 +28,7 @@ void ctAssemblerCore::assembleString(const std::string& source) {
 	ctNodePrinter printer;
 	program->accept(printer);
 	
-	//mResolver.resolve(*program);
+	mResolver.resolve(*program);
 
 	if (mErrors.hasError()) {
 		std::cerr << mErrors.getErrors();

@@ -15,7 +15,7 @@ class ctParser {
 
 	std::unique_ptr<ctOperationNode>
 	parseOperation();
-
+	
 public:
 
 	std::unique_ptr<ctProgramNode>
